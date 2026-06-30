@@ -111,7 +111,20 @@ h1, h2, h3 {
   align-items: center;
   gap: 10px;
   font-family: var(--font-display);
-  /* ...rest unchanged */
+  font-weight: 600;
+  font-size: 18px;
+  text-decoration: none;
+}
+.nav-brand .dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 10px 2px var(--cyan);
+}
+.nav-links {
+  display: flex;
+  gap: 28px;
+  font-size: 14px;
+  color: var(--text-dim);
 }
 .nav-links a { text-decoration: none; transition: color .15s; }
 .nav-links a:hover { color: var(--text); }

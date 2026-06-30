@@ -30,10 +30,9 @@ from fastapi.templating import Jinja2Templates
 BASE_DIR = Path(__file__).parent
 
 # ── Config (set these as Railway environment variables) ───────────────────
-BOT_API_URL = os.getenv("BOT_API_URL", "").rstrip("/")   
+BOT_API_URL = os.getenv("BOT_API_URL", "").rstrip("/")        # e.g. https://jarvis-bot.up.railway.app
 DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", "")
 DEFAULT_BOT_NAME = os.getenv("BOT_NAME", "Jarvis")
-SUPPORT_SERVER_URL = os.getenv("SUPPORT_SERVER_URL", "#") 
 
 INVITE_PERMISSIONS = "414531833920"  # send/embed/history/react/connect/speak/manage messages
 INVITE_URL = (
@@ -41,6 +40,7 @@ INVITE_URL = (
     f"&permissions={INVITE_PERMISSIONS}&scope=bot%20applications.commands"
     if DISCORD_CLIENT_ID else "#"
 )
+SUPPORT_SERVER_URL = os.getenv("SUPPORT_SERVER_URL", "#")  # e.g. https://discord.gg/your-invite-code
 
 HIGHLIGHT_KEYS = ["🤖 AI", "🧠 Memory", "♟️ Games", "🎵 Music", "🪙 Jarvis Credits", "⏰ Reminders"]
 
@@ -101,6 +101,7 @@ async def home(request: Request):
             "categories": categories,
             "highlights": highlights,
             "invite_url": INVITE_URL,
+            "support_server_url": SUPPORT_SERVER_URL,
             "bot_name": bot_name,
         },
     )

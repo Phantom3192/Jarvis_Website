@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About the Developer — {{ bot_name }}</title>
+<meta name="description" content="Meet the developer behind {{ bot_name }}.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/static/img/icon-192.png">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a href="/" class="nav-brand"><span class="dot"></span>{{ bot_name }}</a>
+    <div class="nav-links">
+      <a href="/#capabilities">Capabilities</a>
+      <a href="/#status">Status</a>
+      <a href="/#docs">Commands</a>
+      <a href="/about">About the Developer</a>
+    </div>
+    <div class="nav-ctas">
+      <a class="nav-cta nav-cta-ghost" href="{{ support_server_url }}">Official Server</a>
+      <a class="nav-cta" href="{{ invite_url }}">Add to Discord</a>
+    </div>
+  </div>
+</nav>
+
+<header class="legal-hero">
+  <div class="wrap">
+    <p class="eyebrow">Behind the system</p>
+    <h1>About the Developer</h1>
+  </div>
+</header>
+
+<section class="dev-section">
+  <div class="wrap dev-card">
+    <div class="dev-avatar-wrap">
+      <img class="dev-avatar" src="/static/img/dev-avatar.jpg" alt="Portrait of Phantom, developer of {{ bot_name }}">
+    </div>
+    <div class="dev-info">
+      <p class="eyebrow">Developer</p>
+      <h2>Phantom</h2>
+      <p class="dev-bio">I build {{ bot_name }} from the ground up — design, backend, and everything in between. What started as a personal project turned into a full AI assistant for Discord, built to handle conversation, games, music, and moderation in one place instead of forcing servers to juggle five different bots. I'm always tinkering, shipping updates, and shaping where {{ bot_name }} goes next.</p>
+      <div class="dev-links">
+        <span class="dev-link">
+          <svg class="dev-link-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.369a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.369a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.009c.12.099.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.076.076 0 0 0-.04.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.673-3.549-13.66a.061.061 0 0 0-.031-.029ZM8.02 15.331c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.211 0 2.176 1.094 2.157 2.418 0 1.334-.955 2.419-2.157 2.419Zm7.974 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.211 0 2.176 1.094 2.157 2.418 0 1.334-.946 2.419-2.157 2.419Z"/></svg>
+          <span>phantom_3192</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap dev-extra">
+    <p>{{ bot_name }} is an independent project — no team, no studio, just one person building something they wanted to exist. If you run into a bug, have a feature idea, or just want to say hi, the <a href="{{ support_server_url }}">official Discord server</a> is the best place to reach out.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-brand">{{ bot_name }} — system console</div>
+    <div class="footer-links">
+      <a href="{{ invite_url }}">Add to Discord</a>
+      <a href="/#status">Status</a>
+      <a href="/#docs">Commands</a>
+      <a href="/about">About the Developer</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

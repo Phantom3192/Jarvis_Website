@@ -127,10 +127,7 @@ h1, h2, h3 {
 }
 .nav-cta:hover { background: var(--cyan-soft); border-color: var(--cyan); }
 .nav-ctas { display: flex; align-items: center; gap: 12px; }
-.nav-cta-ghost {
-  color: var(--text-dim);
-}
-.nav-cta-ghost:hover { color: var(--text); background: transparent; border-color: var(--cyan-dim); }
+.nav-cta-ghost:hover { background: var(--cyan-soft); border-color: var(--cyan); }
 
 /* ── Hero ────────────────────────────────────────────────── */
 

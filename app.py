@@ -30,9 +30,10 @@ from fastapi.templating import Jinja2Templates
 BASE_DIR = Path(__file__).parent
 
 # ── Config (set these as Railway environment variables) ───────────────────
-BOT_API_URL = os.getenv("BOT_API_URL", "").rstrip("/")        # e.g. https://jarvis-bot.up.railway.app
+BOT_API_URL = os.getenv("BOT_API_URL", "").rstrip("/")   
 DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", "")
 DEFAULT_BOT_NAME = os.getenv("BOT_NAME", "Jarvis")
+SUPPORT_SERVER_URL = os.getenv("SUPPORT_SERVER_URL", "#") 
 
 INVITE_PERMISSIONS = "414531833920"  # send/embed/history/react/connect/speak/manage messages
 INVITE_URL = (

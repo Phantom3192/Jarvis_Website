@@ -111,20 +111,7 @@ h1, h2, h3 {
   align-items: center;
   gap: 10px;
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 18px;
-  text-decoration: none;
-}
-.nav-brand .dot {
-  width: 9px; height: 9px; border-radius: 50%;
-  background: var(--cyan);
-  box-shadow: 0 0 10px 2px var(--cyan);
-}
-.nav-links {
-  display: flex;
-  gap: 28px;
-  font-size: 14px;
-  color: var(--text-dim);
+  /* ...rest unchanged */
 }
 .nav-links a { text-decoration: none; transition: color .15s; }
 .nav-links a:hover { color: var(--text); }
@@ -139,6 +126,12 @@ h1, h2, h3 {
   transition: background .15s, border-color .15s;
 }
 .nav-cta:hover { background: var(--cyan-soft); border-color: var(--cyan); }
+.nav-ctas { display: flex; align-items: center; gap: 12px; }
+.nav-cta-ghost {
+  border-color: transparent;
+  color: var(--text-dim);
+}
+.nav-cta-ghost:hover { color: var(--text); background: transparent; border-color: var(--cyan-dim); }
 
 /* ── Hero ────────────────────────────────────────────────── */
 

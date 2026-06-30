@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — {{ bot_name }}</title>
+<meta name="description" content="Privacy Policy for {{ bot_name }}, an AI assistant for Discord.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/static/img/icon-192.png">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a href="/" class="nav-brand"><span class="dot"></span>{{ bot_name }}</a>
+    <div class="nav-links">
+      <a href="/#capabilities">Capabilities</a>
+      <a href="/#status">Status</a>
+      <a href="/#docs">Commands</a>
+    </div>
+    <div class="nav-ctas">
+      <a class="nav-cta nav-cta-ghost" href="{{ support_server_url }}">Official Server</a>
+      <a class="nav-cta" href="{{ invite_url }}">Add to Discord</a>
+    </div>
+  </div>
+</nav>
+
+<header class="legal-hero">
+  <div class="wrap">
+    <p class="eyebrow">Legal</p>
+    <h1>Privacy Policy</h1>
+    <p class="legal-updated">Last updated: {{ last_updated }}</p>
+  </div>
+</header>
+
+<section class="legal">
+  <div class="wrap legal-content">
+
+    <p>This Privacy Policy explains what information {{ bot_name }} ("the Bot", "we", "us") collects when you use it on Discord or visit this website, why we collect it, and what choices you have. By inviting the Bot to a server or interacting with it, you agree to this policy.</p>
+
+    <h2>1. Information we collect</h2>
+    <p>We collect the minimum data needed to make the Bot function:</p>
+    <ul>
+      <li><strong>Discord identifiers</strong> — your Discord user ID, username, and the server (guild) and channel IDs where the Bot is used. We do not collect your email, password, or Discord account credentials; we never have access to these.</li>
+      <li><strong>Message content</strong> — when you use commands or talk to the Bot's AI features, the relevant message content is processed in order to generate a response. Some features (such as memory or conversation history) may store this content so the Bot can refer back to it later.</li>
+      <li><strong>Usage data</strong> — command usage, timestamps, and basic interaction stats (e.g. server count, uptime) used to operate and improve the Bot, some of which is shown publicly on this website (such as total server/user counts).</li>
+      <li><strong>Economy / progression data</strong> — if the Bot includes features like Jarvis Credits, games, or leveling, we store the relevant balances, scores, or progress tied to your Discord user ID.</li>
+    </ul>
+
+    <h2>2. How we use this information</h2>
+    <ul>
+      <li>To operate core Bot functionality (responding to commands, AI conversation, games, music, moderation).</li>
+      <li>To provide memory/context features where the Bot recalls earlier parts of a conversation.</li>
+      <li>To maintain and improve reliability, performance, and detect abuse of the service.</li>
+      <li>To display aggregate, non-identifying statistics (like total servers or users) on this website.</li>
+    </ul>
+    <p>We do not sell your data, and we do not use your data for advertising.</p>
+
+    <h2>3. Third-party processing</h2>
+    <p>Some features rely on third-party AI providers to generate responses. When you interact with AI-powered commands, the relevant message content may be sent to these providers for processing in order to generate a reply. We only share what's necessary for the feature to work, and these providers are bound by their own data-handling terms.</p>
+
+    <h2>4. Data retention</h2>
+    <p>We retain data only as long as necessary to provide the Bot's functionality — for example, memory data is kept so the Bot can maintain context, and economy data is kept so your progress isn't lost. You can request deletion of your data at any time (see Section 7).</p>
+
+    <h2>5. Data storage and security</h2>
+    <p>Data is stored on secured servers/databases used to run the Bot. While we take reasonable steps to protect stored data, no system is 100% secure, and we cannot guarantee absolute security.</p>
+
+    <h2>6. Children's privacy</h2>
+    <p>The Bot is intended for use in accordance with Discord's own Terms of Service, which requires users to be at least 13 years old (or the minimum age required in your jurisdiction). We do not knowingly collect data from anyone below this age.</p>
+
+    <h2>7. Your rights and choices</h2>
+    <ul>
+      <li><strong>Removal</strong> — removing the Bot from your server stops it from collecting any further data there.</li>
+      <li><strong>Data deletion</strong> — you can request deletion of any data tied to your Discord user ID by contacting us (see Section 9) or, where available, via an in-Bot data command.</li>
+      <li><strong>Opting out</strong> — you can simply stop using specific commands/features if you don't want related data stored.</li>
+    </ul>
+
+    <h2>8. Changes to this policy</h2>
+    <p>We may update this Privacy Policy from time to time. Material changes will be reflected by updating the "Last updated" date above. Continued use of the Bot after changes take effect constitutes acceptance of the revised policy.</p>
+
+    <h2>9. Contact</h2>
+    <p>Questions about this Privacy Policy or data requests can be sent through our <a href="{{ support_server_url }}">official Discord server</a>.</p>
+
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-brand">{{ bot_name }} — system console</div>
+    <div class="footer-links">
+      <a href="{{ invite_url }}">Add to Discord</a>
+      <a href="/#status">Status</a>
+      <a href="/#docs">Commands</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

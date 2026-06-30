@@ -41,6 +41,7 @@ INVITE_URL = (
     if DISCORD_CLIENT_ID else "#"
 )
 SUPPORT_SERVER_URL = os.getenv("SUPPORT_SERVER_URL", "#")  # e.g. https://discord.gg/your-invite-code
+LEGAL_LAST_UPDATED = os.getenv("LEGAL_LAST_UPDATED", "July 1, 2026")
 
 HIGHLIGHT_KEYS = ["🤖 AI", "🧠 Memory", "♟️ Games", "🎵 Music", "🪙 Jarvis Credits", "⏰ Reminders"]
 
@@ -103,6 +104,36 @@ async def home(request: Request):
             "invite_url": INVITE_URL,
             "support_server_url": SUPPORT_SERVER_URL,
             "bot_name": bot_name,
+        },
+    )
+
+
+@app.get("/privacy")
+async def privacy(request: Request):
+    _, bot_name = await _get_categories()
+    return templates.TemplateResponse(
+        "privacy.html",
+        {
+            "request": request,
+            "invite_url": INVITE_URL,
+            "support_server_url": SUPPORT_SERVER_URL,
+            "bot_name": bot_name,
+            "last_updated": LEGAL_LAST_UPDATED,
+        },
+    )
+
+
+@app.get("/terms")
+async def terms(request: Request):
+    _, bot_name = await _get_categories()
+    return templates.TemplateResponse(
+        "terms.html",
+        {
+            "request": request,
+            "invite_url": INVITE_URL,
+            "support_server_url": SUPPORT_SERVER_URL,
+            "bot_name": bot_name,
+            "last_updated": LEGAL_LAST_UPDATED,
         },
     )
 

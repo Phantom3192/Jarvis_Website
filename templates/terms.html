@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — {{ bot_name }}</title>
+<meta name="description" content="Terms of Service for {{ bot_name }}, an AI assistant for Discord.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/static/img/icon-192.png">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a href="/" class="nav-brand"><span class="dot"></span>{{ bot_name }}</a>
+    <div class="nav-links">
+      <a href="/#capabilities">Capabilities</a>
+      <a href="/#status">Status</a>
+      <a href="/#docs">Commands</a>
+    </div>
+    <div class="nav-ctas">
+      <a class="nav-cta nav-cta-ghost" href="{{ support_server_url }}">Official Server</a>
+      <a class="nav-cta" href="{{ invite_url }}">Add to Discord</a>
+    </div>
+  </div>
+</nav>
+
+<header class="legal-hero">
+  <div class="wrap">
+    <p class="eyebrow">Legal</p>
+    <h1>Terms of Service</h1>
+    <p class="legal-updated">Last updated: {{ last_updated }}</p>
+  </div>
+</header>
+
+<section class="legal">
+  <div class="wrap legal-content">
+
+    <p>These Terms of Service ("Terms") govern your use of {{ bot_name }} ("the Bot") on Discord and this accompanying website. By inviting the Bot to a server, or using its commands, you agree to these Terms. If you do not agree, do not use the Bot.</p>
+
+    <h2>1. Eligibility</h2>
+    <p>You must meet Discord's own minimum age requirement (currently 13, or higher where required by local law) to use Discord and, by extension, the Bot. You must also comply with Discord's <a href="https://discord.com/terms" target="_blank" rel="noopener">Terms of Service</a> and <a href="https://discord.com/guidelines" target="_blank" rel="noopener">Community Guidelines</a> at all times while using the Bot.</p>
+
+    <h2>2. Use of the Bot</h2>
+    <p>The Bot is provided for general entertainment, productivity, and moderation purposes within Discord servers. You agree not to:</p>
+    <ul>
+      <li>Use the Bot to violate any applicable law or Discord's Terms of Service / Community Guidelines.</li>
+      <li>Attempt to exploit, reverse-engineer, abuse, spam, or overload the Bot or its underlying systems.</li>
+      <li>Use the Bot to harass, threaten, or harm other users.</li>
+      <li>Attempt to bypass rate limits, permission checks, or moderation features.</li>
+      <li>Use any AI features to generate illegal content, content that exploits or sexualizes minors, or content intended to harass or defame others.</li>
+    </ul>
+
+    <h2>3. Jarvis Credits and virtual items</h2>
+    <p>If the Bot includes virtual currency (such as Jarvis Credits), in-game items, or progression systems, these have no real-world monetary value, cannot be exchanged for real currency, and may be reset, adjusted, or removed at our discretion — for example to fix bugs, exploits, or abuse.</p>
+
+    <h2>4. AI-generated content</h2>
+    <p>Some features use AI to generate responses. AI output can be inaccurate, incomplete, or inappropriate. You should not rely on the Bot's AI responses for legal, medical, financial, or other professional advice. We are not responsible for actions taken based on the Bot's responses.</p>
+
+    <h2>5. Availability</h2>
+    <p>We aim to keep the Bot online and reliable but do not guarantee uninterrupted availability. The Bot may be unavailable due to maintenance, Discord outages, third-party service issues, or factors outside our control.</p>
+
+    <h2>6. Termination and enforcement</h2>
+    <p>We may suspend or block access to the Bot — for a specific user, server, or globally — at our discretion, including (but not limited to) cases of abuse, exploitation, violation of these Terms, or violation of Discord's policies. Server admins may remove the Bot from their own server at any time.</p>
+
+    <h2>7. Disclaimer of warranties</h2>
+    <p>The Bot is provided "as is" and "as available," without warranties of any kind, whether express or implied, including but not limited to fitness for a particular purpose or non-infringement.</p>
+
+    <h2>8. Limitation of liability</h2>
+    <p>To the fullest extent permitted by law, we are not liable for any indirect, incidental, or consequential damages arising from your use of, or inability to use, the Bot — including loss of data, virtual items, or progression.</p>
+
+    <h2>9. Changes to these Terms</h2>
+    <p>We may update these Terms from time to time. Material changes will be reflected by updating the "Last updated" date above. Continued use of the Bot after changes take effect constitutes acceptance of the revised Terms.</p>
+
+    <h2>10. Contact</h2>
+    <p>Questions about these Terms can be sent through our <a href="{{ support_server_url }}">official Discord server</a>.</p>
+
+    <p class="legal-see-also">See also our <a href="/privacy">Privacy Policy</a>.</p>
+
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-brand">{{ bot_name }} — system console</div>
+    <div class="footer-links">
+      <a href="{{ invite_url }}">Add to Discord</a>
+      <a href="/#status">Status</a>
+      <a href="/#docs">Commands</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

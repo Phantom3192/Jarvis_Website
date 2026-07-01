@@ -179,6 +179,20 @@ async def status_page(request: Request):
     )
 
 
+@app.get("/guide")
+async def guide(request: Request):
+    _, bot_name = await _get_categories()
+    return templates.TemplateResponse(
+        "guide.html",
+        {
+            "request": request,
+            "invite_url": INVITE_URL,
+            "support_server_url": SUPPORT_SERVER_URL,
+            "bot_name": bot_name,
+        },
+    )
+
+
 @app.get("/privacy")
 async def privacy(request: Request):
     _, bot_name = await _get_categories()

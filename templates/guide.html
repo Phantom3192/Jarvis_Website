@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New User Guide — {{ bot_name }}</title>
+<meta name="description" content="A complete guide to using {{ bot_name }} — chat, Jarvis Credits, games, music, and more.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/static/img/icon-192.png">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a href="/" class="nav-brand"><span class="dot"></span>{{ bot_name }}</a>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/status">Status</a>
+      <a href="/#docs">Commands</a>
+      <a href="/guide">Guide</a>
+      <a href="/about">About the Developer</a>
+    </div>
+    <div class="nav-ctas">
+      <a class="nav-cta nav-cta-ghost" href="{{ support_server_url }}">Official Server</a>
+      <a class="nav-cta" href="{{ invite_url }}">Add to Discord</a>
+    </div>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="nav-mobile" id="navMobile"></div>
+</nav>
+
+<header class="legal-hero">
+  <div class="wrap">
+    <p class="eyebrow">Welcome</p>
+    <h1>New User Guide</h1>
+    <p class="legal-updated">Everything you need to know to get started with {{ bot_name }}.</p>
+  </div>
+</header>
+
+<section id="docs">
+  <div class="wrap">
+    <div class="docs-layout">
+      <nav class="docs-nav">
+        <a class="docs-nav-item" href="#chat">Talking to {{ bot_name }}</a>
+        <a class="docs-nav-item" href="#credits">Jarvis Credits</a>
+        <a class="docs-nav-item" href="#games">Games</a>
+        <a class="docs-nav-item" href="#music">Music</a>
+        <a class="docs-nav-item" href="#search">Search &amp; Info</a>
+        <a class="docs-nav-item" href="#feedback">Feedback</a>
+        <a class="docs-nav-item" href="#rules">The Rules</a>
+      </nav>
+
+      <div class="docs-content">
+
+        <div class="docs-cat legal-content" id="chat">
+          <div class="docs-cat-head">
+            <div>
+              <h3>🤖 Talking to {{ bot_name }}</h3>
+              <p>Just chat — no setup required.</p>
+            </div>
+          </div>
+          <p>You can <strong>@mention {{ bot_name }}</strong> or <strong>DM it directly</strong>, or use <code>/chat</code> if you prefer a slash command.</p>
+          <p>{{ bot_name }} remembers your last couple of messages so it can follow a conversation, and it can also remember things about you long-term — your name, where you're from, what you like — so you don't have to repeat yourself every time. Just tell it naturally, e.g. <em>"call me Alex"</em> or <em>"remember that I love hiking."</em> You can also send images — {{ bot_name }} can look at and describe or answer questions about pictures, depending on the model you've selected.</p>
+          <table class="docs-cmd-table">
+            <tr><td>/setmodel</td><td>Choose which AI model replies to you — there's a fast one, a smart one, and one that can read images</td></tr>
+            <tr><td>/mymodel</td><td>Check which model you're currently using</td></tr>
+            <tr><td>/mymemory</td><td>See everything {{ bot_name }} remembers about you</td></tr>
+            <tr><td>/forgetme</td><td>Wipe everything {{ bot_name }} remembers about you</td></tr>
+            <tr><td>/clearhistory</td><td>Clear your recent conversation</td></tr>
+            <tr><td>/nickname</td><td>Tell {{ bot_name }} what to call you</td></tr>
+            <tr><td>/summary</td><td>Get a quick summary of your recent conversation</td></tr>
+            <tr><td>/dnd</td><td>Toggle Do Not Disturb — quiets most responses to you</td></tr>
+            <tr><td>/remindme</td><td>Set a DM reminder for later</td></tr>
+            <tr><td>/myreminders</td><td>View your active reminders</td></tr>
+          </table>
+          <p><strong>Daily limit:</strong> everyone gets 100 free AI messages a day, resetting at midnight UTC. You'll get a heads-up once you've used 80. If you run out, you can either wait for the reset or spend Jarvis Credits to reset your limit early with <code>/mylimit</code>.</p>
+        </div>
+
+        <div class="docs-cat legal-content" id="credits">
+          <div class="docs-cat-head">
+            <div>
+              <h3>🪙 Jarvis Credits (JC)</h3>
+              <p>{{ bot_name }}'s own currency — earn it just by using the bot.</p>
+            </div>
+          </div>
+          <p><strong>How to earn JC</strong></p>
+          <table class="docs-cmd-table">
+            <tr><td>Send your first message of the day</td><td>50 JC</td></tr>
+            <tr><td>Being new here (one-time)</td><td>50 JC</td></tr>
+            <tr><td>Chatting with the AI</td><td>5 JC per reply, up to 100 JC/day</td></tr>
+            <tr><td>Keeping a daily chat streak going</td><td>200 JC at 7 days, 500 JC at 30 days</td></tr>
+            <tr><td>Getting a suggestion or bug report accepted</td><td>50 JC</td></tr>
+            <tr><td>Referring a friend who redeems your code</td><td>50 JC</td></tr>
+          </table>
+          <p><strong>How to spend JC</strong></p>
+          <table class="docs-cmd-table">
+            <tr><td>Reset your daily AI limit early</td><td>50 JC</td></tr>
+            <tr><td>Save a broken counting-game streak</td><td>25 JC</td></tr>
+            <tr><td>Get an extra chess hint</td><td>15 JC</td></tr>
+            <tr><td>Open a Mystery Box (random 100–300 JC reward)</td><td>200 JC</td></tr>
+          </table>
+          <p><strong>Commands</strong></p>
+          <table class="docs-cmd-table">
+            <tr><td>/balance</td><td>Check how much JC you have</td></tr>
+            <tr><td>/leaderboard</td><td>See the top JC holders on the server</td></tr>
+            <tr><td>/streak</td><td>Check your daily chat streak</td></tr>
+            <tr><td>/shop</td><td>Browse what you can buy</td></tr>
+            <tr><td>/mysterybox</td><td>Open a mystery box</td></tr>
+            <tr><td>/invite</td><td>Get your personal referral code to share</td></tr>
+            <tr><td>/redeem</td><td>Use a friend's referral code — only works the very first time you interact with {{ bot_name }}</td></tr>
+            <tr><td>/transferjc</td><td>Send JC to another user</td></tr>
+          </table>
+        </div>
+
+        <div class="docs-cat legal-content" id="games">
+          <div class="docs-cat-head">
+            <div>
+              <h3>🎮 Games</h3>
+              <p>Chess, Mafia, Hangman, and a server-wide counting game.</p>
+            </div>
+          </div>
+
+          <h2>Chess</h2>
+          <p>Challenge someone with <code>/chess</code>. Make moves with <code>!move</code>, offer or accept a draw with <code>!draw</code>, resign with <code>!resign</code>, or request to undo your last move with <code>!undo</code> — your opponent has to agree. Stuck? Use <code>!hint</code> for an AI-suggested move; your first hint each turn is free, extra ones cost JC. <code>!chessboard</code> redraws the current board if you've lost track of it.</p>
+
+          <h2>Mafia 🎭</h2>
+          <p>A full social-deduction game for a group. Start a lobby with <code>/mafia</code>, and the host can pick from 11 possible roles — Mafia, Detective, Doctor, Villager, Vigilante, Jester, Mayor, Serial Killer, Bodyguard, Spy, Escort. Day and night phases move forward automatically once everyone's acted, or when the timer runs out. You can write a "last will" that gets revealed if you're eliminated, and Mafia members get a private chat to coordinate. Run <code>/mafguide</code> for the full rules explainer before your first game.</p>
+
+          <h2>Hangman</h2>
+          <p>Quick and simple — <code>/hangman</code> starts a round, guess letters to save your character before the gallows fill in. <code>!stophangman</code> ends it early.</p>
+
+          <h2>Counting Game</h2>
+          <p>A shared server game — take turns counting up one number at a time, and nobody can count twice in a row. Ask an admin to set up a counting channel with <code>!countsetup</code>. If you accidentally break the streak, you can pay JC to save it instead of starting over.</p>
+        </div>
+
+        <div class="docs-cat legal-content" id="music">
+          <div class="docs-cat-head">
+            <div>
+              <h3>🎵 Music</h3>
+              <p>Join a voice channel, then take the wheel.</p>
+            </div>
+          </div>
+          <table class="docs-cmd-table">
+            <tr><td>/play &lt;song or link&gt;</td><td>Play, or queue, a song</td></tr>
+            <tr><td>/skip</td><td>Skip the current song</td></tr>
+            <tr><td>/pause · /resume</td><td>Pause or resume playback</td></tr>
+            <tr><td>/queue</td><td>See what's queued up</td></tr>
+            <tr><td>/nowplaying</td><td>Show the current track</td></tr>
+            <tr><td>/volume &lt;0-100&gt;</td><td>Adjust the volume</td></tr>
+            <tr><td>/stop</td><td>Stop and disconnect {{ bot_name }} from voice</td></tr>
+            <tr><td>/controls</td><td>Open a control panel with buttons instead of typing commands</td></tr>
+          </table>
+        </div>
+
+        <div class="docs-cat legal-content" id="search">
+          <div class="docs-cat-head">
+            <div>
+              <h3>🔍 Search &amp; Info</h3>
+              <p>Look things up without leaving Discord.</p>
+            </div>
+          </div>
+          <table class="docs-cmd-table">
+            <tr><td>/image &lt;query&gt;</td><td>Search Google Images and get a result</td></tr>
+            <tr><td>/youtube &lt;query&gt;</td><td>Search YouTube and pick a video from the results</td></tr>
+            <tr><td>/yttrend</td><td>Browse trending YouTube videos by category</td></tr>
+            <tr><td>/ytinfo &lt;video&gt;</td><td>Get full details on a specific video</td></tr>
+            <tr><td>/stats</td><td>Check your personal {{ bot_name }} usage stats</td></tr>
+            <tr><td>/ping</td><td>Check {{ bot_name }}'s response speed</td></tr>
+            <tr><td>/uptime</td><td>See how long {{ bot_name }} has been online</td></tr>
+          </table>
+        </div>
+
+        <div class="docs-cat legal-content" id="feedback">
+          <div class="docs-cat-head">
+            <div>
+              <h3>💬 Feedback</h3>
+              <p>Found a bug or have an idea? {{ bot_name }} wants to hear it.</p>
+            </div>
+          </div>
+          <table class="docs-cmd-table">
+            <tr><td>/bugreport</td><td>Report something broken</td></tr>
+            <tr><td>/feedback</td><td>Suggest an improvement</td></tr>
+          </table>
+          <p>If your suggestion or bug report gets accepted, you'll earn 50 JC as a thank-you.</p>
+        </div>
+
+        <div class="docs-cat legal-content" id="rules">
+          <div class="docs-cat-head">
+            <div>
+              <h3>📜 The Rules</h3>
+              <p>A few things to keep in mind.</p>
+            </div>
+          </div>
+          <ul>
+            <li>Don't spam commands — flooding {{ bot_name }} with too many commands too quickly will get you <strong>temporarily timed out</strong> from using the bot.</li>
+            <li>There's a short cooldown between commands, so give it a second between messages.</li>
+            <li>Being banned from {{ bot_name }} (globally or just on this server) means none of its commands will work for you — you'll get a one-time DM letting you know if this happens.</li>
+            <li>Full command list any time: run <code>/help</code> for an interactive, categorized menu.</li>
+          </ul>
+          <p class="legal-see-also">Have fun, and welcome to the server! 🎉</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-brand">{{ bot_name }} — system console</div>
+    <div class="footer-links">
+      <a href="{{ invite_url }}">Add to Discord</a>
+      <a href="/status">Status</a>
+      <a href="/#docs">Commands</a>
+      <a href="/guide">Guide</a>
+      <a href="/about">About the Developer</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/static/js/main.js"></script>
+</body>
+</html>

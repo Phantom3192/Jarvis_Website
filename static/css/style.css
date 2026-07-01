@@ -585,10 +585,16 @@ footer .wrap {
   .docs-cmd-table td:first-child {
     white-space: normal;
     word-break: break-word;
-    padding: 0 0 4px;
+    padding: 0 20px 4px;
     width: 100%;
   }
-  .docs-cmd-table td:last-child { padding: 0; }
+  .docs-cmd-table td:last-child { padding: 0 20px; }
+  .docs-cat-head { padding: 16px 20px; }
+  .docs-cmd-table tr { padding: 12px 0; }
+  .hero {
+    background-size: contain;
+    background-position: top center;
+  }
 }
 
 /* Keyboard focus visibility */

@@ -61,15 +61,17 @@
 
       <div class="docs-content">
 
-        <div class="docs-cat legal-content" id="chat">
+        <div class="docs-cat" id="chat">
           <div class="docs-cat-head">
             <div>
               <h3>🤖 Talking to {{ bot_name }}</h3>
               <p>Just chat — no setup required.</p>
             </div>
           </div>
-          <p>You can <strong>@mention {{ bot_name }}</strong> or <strong>DM it directly</strong>, or use <code>/chat</code> if you prefer a slash command.</p>
-          <p>{{ bot_name }} remembers your last couple of messages so it can follow a conversation, and it can also remember things about you long-term — your name, where you're from, what you like — so you don't have to repeat yourself every time. Just tell it naturally, e.g. <em>"call me Alex"</em> or <em>"remember that I love hiking."</em> You can also send images — {{ bot_name }} can look at and describe or answer questions about pictures, depending on the model you've selected.</p>
+          <div class="docs-cat-body legal-content">
+            <p>You can <strong>@mention {{ bot_name }}</strong> or <strong>DM it directly</strong>, or use <code>/chat</code> if you prefer a slash command.</p>
+            <p>{{ bot_name }} remembers your last couple of messages so it can follow a conversation, and it can also remember things about you long-term — your name, where you're from, what you like — so you don't have to repeat yourself every time. Just tell it naturally, e.g. <em>"call me Alex"</em> or <em>"remember that I love hiking."</em> You can also send images — {{ bot_name }} can look at and describe or answer questions about pictures, depending on the model you've selected.</p>
+          </div>
           <table class="docs-cmd-table">
             <tr><td>/setmodel</td><td>Choose which AI model replies to you — there's a fast one, a smart one, and one that can read images</td></tr>
             <tr><td>/mymodel</td><td>Check which model you're currently using</td></tr>
@@ -82,17 +84,21 @@
             <tr><td>/remindme</td><td>Set a DM reminder for later</td></tr>
             <tr><td>/myreminders</td><td>View your active reminders</td></tr>
           </table>
-          <p><strong>Daily limit:</strong> everyone gets 100 free AI messages a day, resetting at midnight UTC. You'll get a heads-up once you've used 80. If you run out, you can either wait for the reset or spend Jarvis Credits to reset your limit early with <code>/mylimit</code>.</p>
+          <div class="docs-cat-body legal-content">
+            <p><strong>Daily limit:</strong> everyone gets 100 free AI messages a day, resetting at midnight UTC. You'll get a heads-up once you've used 80. If you run out, you can either wait for the reset or spend Jarvis Credits to reset your limit early with <code>/mylimit</code>.</p>
+          </div>
         </div>
 
-        <div class="docs-cat legal-content" id="credits">
+        <div class="docs-cat" id="credits">
           <div class="docs-cat-head">
             <div>
               <h3>🪙 Jarvis Credits (JC)</h3>
               <p>{{ bot_name }}'s own currency — earn it just by using the bot.</p>
             </div>
           </div>
-          <p><strong>How to earn JC</strong></p>
+          <div class="docs-cat-body legal-content">
+            <p><strong>How to earn JC</strong></p>
+          </div>
           <table class="docs-cmd-table">
             <tr><td>Send your first message of the day</td><td>50 JC</td></tr>
             <tr><td>Being new here (one-time)</td><td>50 JC</td></tr>
@@ -101,14 +107,18 @@
             <tr><td>Getting a suggestion or bug report accepted</td><td>50 JC</td></tr>
             <tr><td>Referring a friend who redeems your code</td><td>50 JC</td></tr>
           </table>
-          <p><strong>How to spend JC</strong></p>
+          <div class="docs-cat-body legal-content">
+            <p><strong>How to spend JC</strong></p>
+          </div>
           <table class="docs-cmd-table">
             <tr><td>Reset your daily AI limit early</td><td>50 JC</td></tr>
             <tr><td>Save a broken counting-game streak</td><td>25 JC</td></tr>
             <tr><td>Get an extra chess hint</td><td>15 JC</td></tr>
             <tr><td>Open a Mystery Box (random 100–300 JC reward)</td><td>200 JC</td></tr>
           </table>
-          <p><strong>Commands</strong></p>
+          <div class="docs-cat-body legal-content">
+            <p><strong>Commands</strong></p>
+          </div>
           <table class="docs-cmd-table">
             <tr><td>/balance</td><td>Check how much JC you have</td></tr>
             <tr><td>/leaderboard</td><td>See the top JC holders on the server</td></tr>
@@ -121,28 +131,29 @@
           </table>
         </div>
 
-        <div class="docs-cat legal-content" id="games">
+        <div class="docs-cat" id="games">
           <div class="docs-cat-head">
             <div>
               <h3>🎮 Games</h3>
               <p>Chess, Mafia, Hangman, and a server-wide counting game.</p>
             </div>
           </div>
+          <div class="docs-cat-body legal-content">
+            <h2>Chess</h2>
+            <p>Challenge someone with <code>/chess</code>. Make moves with <code>!move</code>, offer or accept a draw with <code>!draw</code>, resign with <code>!resign</code>, or request to undo your last move with <code>!undo</code> — your opponent has to agree. Stuck? Use <code>!hint</code> for an AI-suggested move; your first hint each turn is free, extra ones cost JC. <code>!chessboard</code> redraws the current board if you've lost track of it.</p>
 
-          <h2>Chess</h2>
-          <p>Challenge someone with <code>/chess</code>. Make moves with <code>!move</code>, offer or accept a draw with <code>!draw</code>, resign with <code>!resign</code>, or request to undo your last move with <code>!undo</code> — your opponent has to agree. Stuck? Use <code>!hint</code> for an AI-suggested move; your first hint each turn is free, extra ones cost JC. <code>!chessboard</code> redraws the current board if you've lost track of it.</p>
+            <h2>Mafia 🎭</h2>
+            <p>A full social-deduction game for a group. Start a lobby with <code>/mafia</code>, and the host can pick from 11 possible roles — Mafia, Detective, Doctor, Villager, Vigilante, Jester, Mayor, Serial Killer, Bodyguard, Spy, Escort. Day and night phases move forward automatically once everyone's acted, or when the timer runs out. You can write a "last will" that gets revealed if you're eliminated, and Mafia members get a private chat to coordinate. Run <code>/mafguide</code> for the full rules explainer before your first game.</p>
 
-          <h2>Mafia 🎭</h2>
-          <p>A full social-deduction game for a group. Start a lobby with <code>/mafia</code>, and the host can pick from 11 possible roles — Mafia, Detective, Doctor, Villager, Vigilante, Jester, Mayor, Serial Killer, Bodyguard, Spy, Escort. Day and night phases move forward automatically once everyone's acted, or when the timer runs out. You can write a "last will" that gets revealed if you're eliminated, and Mafia members get a private chat to coordinate. Run <code>/mafguide</code> for the full rules explainer before your first game.</p>
+            <h2>Hangman</h2>
+            <p>Quick and simple — <code>/hangman</code> starts a round, guess letters to save your character before the gallows fill in. <code>!stophangman</code> ends it early.</p>
 
-          <h2>Hangman</h2>
-          <p>Quick and simple — <code>/hangman</code> starts a round, guess letters to save your character before the gallows fill in. <code>!stophangman</code> ends it early.</p>
-
-          <h2>Counting Game</h2>
-          <p>A shared server game — take turns counting up one number at a time, and nobody can count twice in a row. Ask an admin to set up a counting channel with <code>!countsetup</code>. If you accidentally break the streak, you can pay JC to save it instead of starting over.</p>
+            <h2>Counting Game</h2>
+            <p>A shared server game — take turns counting up one number at a time, and nobody can count twice in a row. Ask an admin to set up a counting channel with <code>!countsetup</code>. If you accidentally break the streak, you can pay JC to save it instead of starting over.</p>
+          </div>
         </div>
 
-        <div class="docs-cat legal-content" id="music">
+        <div class="docs-cat" id="music">
           <div class="docs-cat-head">
             <div>
               <h3>🎵 Music</h3>
@@ -161,7 +172,7 @@
           </table>
         </div>
 
-        <div class="docs-cat legal-content" id="search">
+        <div class="docs-cat" id="search">
           <div class="docs-cat-head">
             <div>
               <h3>🔍 Search &amp; Info</h3>
@@ -179,7 +190,7 @@
           </table>
         </div>
 
-        <div class="docs-cat legal-content" id="feedback">
+        <div class="docs-cat" id="feedback">
           <div class="docs-cat-head">
             <div>
               <h3>💬 Feedback</h3>
@@ -190,23 +201,27 @@
             <tr><td>/bugreport</td><td>Report something broken</td></tr>
             <tr><td>/feedback</td><td>Suggest an improvement</td></tr>
           </table>
-          <p>If your suggestion or bug report gets accepted, you'll earn 50 JC as a thank-you.</p>
+          <div class="docs-cat-body legal-content">
+            <p>If your suggestion or bug report gets accepted, you'll earn 50 JC as a thank-you.</p>
+          </div>
         </div>
 
-        <div class="docs-cat legal-content" id="rules">
+        <div class="docs-cat" id="rules">
           <div class="docs-cat-head">
             <div>
               <h3>📜 The Rules</h3>
               <p>A few things to keep in mind.</p>
             </div>
           </div>
-          <ul>
-            <li>Don't spam commands — flooding {{ bot_name }} with too many commands too quickly will get you <strong>temporarily timed out</strong> from using the bot.</li>
-            <li>There's a short cooldown between commands, so give it a second between messages.</li>
-            <li>Being banned from {{ bot_name }} (globally or just on this server) means none of its commands will work for you — you'll get a one-time DM letting you know if this happens.</li>
-            <li>Full command list any time: run <code>/help</code> for an interactive, categorized menu.</li>
-          </ul>
-          <p class="legal-see-also">Have fun, and welcome to the server! 🎉</p>
+          <div class="docs-cat-body legal-content">
+            <ul>
+              <li>Don't spam commands — flooding {{ bot_name }} with too many commands too quickly will get you <strong>temporarily timed out</strong> from using the bot.</li>
+              <li>There's a short cooldown between commands, so give it a second between messages.</li>
+              <li>Being banned from {{ bot_name }} (globally or just on this server) means none of its commands will work for you — you'll get a one-time DM letting you know if this happens.</li>
+              <li>Full command list any time: run <code>/help</code> for an interactive, categorized menu.</li>
+            </ul>
+            <p class="legal-see-also">Have fun, and welcome to the server! 🎉</p>
+          </div>
         </div>
 
       </div>

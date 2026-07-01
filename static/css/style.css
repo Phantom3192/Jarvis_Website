@@ -666,18 +666,39 @@ footer .wrap {
   font-size: 13px;
 }
 
-/* ── Responsive ──────────────────────────────────────────── */
-
-@media (max-width: 900px) {
-  .hero { padding: 56px 0 48px; }
-  .hero-grid { grid-template-columns: 1fr; }
-  .core { max-width: 260px; margin-top: 12px; }
-  .grid { grid-template-columns: 1fr 1fr; }
-  .docs-layout { grid-template-columns: 1fr; }
-  .docs-nav { position: static; flex-direction: row; flex-wrap: wrap; max-height: none; }
-  .telemetry-item { flex: 1 1 40%; }
-  .status-hero-grid, .status-grid { grid-template-columns: 1fr; }
+.sparkline-graph {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 90px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
 }
+
+.sparkline-bar {
+  flex: 1 1 0;
+  min-width: 6px;
+  max-width: 16px;
+  background: linear-gradient(180deg, #31d9ff 0%, #1a7c9c 100%);
+  border-radius: 999px 999px 0 0;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.sparkline-bar:hover {
+  transform: translateY(-3px);
+}
+
+.sparkline-empty {
+  width: 100%;
+  color: var(--text-dim);
+  text-align: center;
+  font-size: 14px;
+  padding: 24px 0;
+}
+
+.status-hero-grid, .status-grid { grid-template-columns: 1fr; }
+
 @media (max-width: 720px) {
   .wrap { padding: 0 18px; }
   .nav-links, .nav-ctas { display: none; }

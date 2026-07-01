@@ -259,6 +259,10 @@ h1, h2, h3 {
   margin-right: 6px;
   box-shadow: 0 0 6px 1px var(--green);
 }
+.core-readout .status-dot.offline {
+  background: #ff5c5c;
+  box-shadow: 0 0 6px 1px #ff5c5c;
+}
 .core-status {
   font-size: 11px;
   letter-spacing: 0.12em;
@@ -507,7 +511,47 @@ footer .wrap {
 
 /* ── Mobile nav toggle ───────────────────────────────────── */
 
-.nav-toggle { display: none; background: none; border: none; color: var(--text); font-size: 22px; cursor: pointer; }
+.nav-toggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--line-bright);
+  border-radius: 6px;
+  color: var(--text);
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+}
+.nav-toggle:hover { border-color: var(--cyan-dim); color: var(--cyan); }
+
+.nav-mobile {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 18px 16px;
+  border-top: 1px solid var(--line);
+}
+.nav-mobile.open { display: flex; }
+.nav-mobile a, .nav-mobile .nav-mobile-cta {
+  padding: 12px 4px;
+  font-size: 15px;
+  color: var(--text-dim);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+.nav-mobile a:last-child { border-bottom: none; }
+.nav-mobile a:hover { color: var(--text); }
+.nav-mobile .nav-mobile-cta {
+  margin-top: 8px;
+  text-align: center;
+  border: 1px solid var(--cyan-dim);
+  border-radius: 6px;
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
 
 /* ── Responsive ──────────────────────────────────────────── */
 
@@ -520,16 +564,18 @@ footer .wrap {
   .docs-nav { position: static; flex-direction: row; flex-wrap: wrap; max-height: none; }
   .telemetry-item { flex: 1 1 40%; }
 }
-@media (max-width: 620px) {
+@media (max-width: 720px) {
   .wrap { padding: 0 18px; }
-  .nav-links { display: none; }
-  .nav-toggle { display: block; }
+  .nav-links, .nav-ctas { display: none; }
+  .nav-toggle { display: flex; }
   .grid { grid-template-columns: 1fr; }
   section { padding: 56px 0; }
   .legal-hero { padding: 56px 0 28px; }
   .legal { padding: 40px 0 72px; }
   .dev-card { flex-direction: column; text-align: center; gap: 24px; padding: 32px 24px; }
   .dev-links { justify-content: center; }
+  .footer .wrap { flex-direction: column; gap: 16px; align-items: flex-start; }
+  .footer-links { flex-wrap: wrap; row-gap: 10px; }
 }
 
 /* Keyboard focus visibility */

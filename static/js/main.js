@@ -17,6 +17,8 @@ async function refreshStats() {
     document.getElementById("core-users")?.replaceChildren(fmtNumber(data.users));
     const coreLabel = document.getElementById("core-online-label");
     if (coreLabel) coreLabel.textContent = data.online ? "Online" : "Reconnecting";
+    const coreDot = document.querySelector(".core-readout .status-dot");
+    if (coreDot) coreDot.classList.toggle("offline", !data.online);
 
     document.getElementById("t-status").textContent = data.online ? "Online" : "Reconnecting";
     document.getElementById("t-guilds").textContent = fmtNumber(data.guilds);
@@ -28,11 +30,54 @@ async function refreshStats() {
     document.getElementById("t-status").textContent = "Unreachable";
     const coreLabel = document.getElementById("core-online-label");
     if (coreLabel) coreLabel.textContent = "Unreachable";
+    const coreDot = document.querySelector(".core-readout .status-dot");
+    if (coreDot) coreDot.classList.add("offline");
   }
 }
 
 refreshStats();
 setInterval(refreshStats, REFRESH_MS);
+
+// ── Mobile nav menu ─────────────────────────────────────────────────────
+const navToggle = document.getElementById("navToggle");
+const navMobile = document.getElementById("navMobile");
+
+if (navToggle && navMobile) {
+  // Clone the desktop links + CTAs into the mobile panel once.
+  const desktopLinks = document.querySelector(".nav-links");
+  const desktopCtas = document.querySelector(".nav-ctas");
+  if (desktopLinks) {
+    desktopLinks.querySelectorAll("a").forEach((a) => {
+      const clone = a.cloneNode(true);
+      navMobile.appendChild(clone);
+    });
+  }
+  if (desktopCtas) {
+    desktopCtas.querySelectorAll("a").forEach((a) => {
+      const clone = a.cloneNode(true);
+      clone.className = "nav-mobile-cta";
+      navMobile.appendChild(clone);
+    });
+  }
+
+  const closeMenu = () => {
+    navMobile.classList.remove("open");
+    navToggle.setAttribute("aria-expanded", "false");
+  };
+
+  navToggle.addEventListener("click", () => {
+    const isOpen = navMobile.classList.toggle("open");
+    navToggle.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  navMobile.addEventListener("click", (e) => {
+    if (e.target.tagName === "A") closeMenu();
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 720) closeMenu();
+  });
+}
 
 // ── Docs scrollspy: highlight the active category in the sidebar ──────────
 const navItems = document.querySelectorAll(".docs-nav-item");

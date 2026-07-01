@@ -62,29 +62,41 @@ _FALLBACK_STATS = {
     "online": False,
     "bot_name": DEFAULT_BOT_NAME,
     "cpu_percent": None,
-    "memory_usage": "—",
-    "rss_usage": "—",
+    "ram_used_bytes": None,
+    "ram_total_bytes": None,
+    "ram_percent": None,
+    "rss_usage": None,
     "bot_cpu": None,
-    "storage": "—",
-    "threads": "—",
+    "storage_percent": None,
+    "storage_used_bytes": None,
+    "storage_limit_bytes": None,
+    "threads": None,
 }
 
 _categories_cache: dict = {"data": {}, "bot_name": DEFAULT_BOT_NAME, "ts": 0.0}
 
 
 def _normalize_stats(raw_stats: dict) -> dict:
+    usage = raw_stats.get("usage", {}) if isinstance(raw_stats.get("usage"), dict) else {}
+
     def pick(*keys, fallback=None):
         for key in keys:
             if key in raw_stats and raw_stats[key] not in (None, ""):
                 return raw_stats[key]
+            if key in usage and usage[key] not in (None, ""):
+                return usage[key]
         return fallback
 
     return {
-        "cpu_percent": pick("cpu", "cpu_percent", "cpu_usage", "system_cpu", "system_cpu_percent"),
-        "memory_usage": pick("memory", "ram", "container_ram", "memory_usage", "mem_usage"),
-        "rss_usage": pick("rss", "bot_rss", "rss_usage"),
-        "bot_cpu": pick("bot_cpu", "process_cpu", "bot_cpu_percent", "process_cpu_percent"),
-        "storage": pick("storage", "disk_usage", "bot_storage", "storage_usage", "disk_usage_human"),
+        "cpu_percent": pick("cpu_percent", "cpu", "cpu_usage", "system_cpu", "system_cpu_percent"),
+        "ram_used_bytes": pick("ram_used_bytes"),
+        "ram_total_bytes": pick("ram_total_bytes"),
+        "ram_percent": pick("ram_percent", "ram", "memory", "memory_percent"),
+        "rss_usage": pick("process_rss_bytes", "rss_usage", "rss", "bot_rss"),
+        "bot_cpu": pick("process_cpu_percent", "bot_cpu", "process_cpu", "bot_cpu_percent"),
+        "storage_percent": pick("storage_percent", "storage", "disk_usage", "bot_storage", "storage_usage", "disk_usage_human"),
+        "storage_used_bytes": pick("storage_used_bytes", "storage_used"),
+        "storage_limit_bytes": pick("storage_limit_bytes", "storage_limit"),
         "threads": pick("threads", "thread_count", "bot_threads"),
     }
 

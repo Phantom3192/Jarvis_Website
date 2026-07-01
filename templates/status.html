@@ -157,6 +157,15 @@ function fmtNumber(value) {
   return Number(value).toLocaleString("en-US");
 }
 
+function formatBytes(bytes) {
+  if (bytes === null || bytes === undefined || isNaN(bytes)) return "—";
+  const value = Number(bytes);
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 ** 2) return `${(value / 1024).toFixed(1)} KB`;
+  if (value < 1024 ** 3) return `${(value / 1024 ** 2).toFixed(1)} MB`;
+  return `${(value / 1024 ** 3).toFixed(1)} GB`;
+}
+
 async function refreshStatusPage() {
   try {
     const res = await fetch("/api/stats", { cache: "no-store" });
@@ -174,18 +183,19 @@ async function refreshStatusPage() {
     setText("status-users", fmtNumber(data.users));
     setText("status-uptime", data.uptime_human || "—");
     setText("status-latency", data.latency_ms !== null && data.latency_ms !== undefined ? `${data.latency_ms} ms` : "—");
-    const cpuValue = data.cpu_percent ?? data.cpu ?? data.cpu_usage ?? data.system_cpu ?? data.system_cpu_percent;
-    const memValue = data.memory_usage ?? data.memory ?? data.ram ?? data.container_ram ?? data.mem_usage;
-    const rssValue = data.rss_usage ?? data.rss ?? data.bot_rss;
-    const botCpuValue = data.bot_cpu ?? data.process_cpu ?? data.bot_cpu_percent ?? data.process_cpu_percent;
-    const storageValue = data.storage ?? data.disk_usage ?? data.bot_storage ?? data.storage_usage ?? data.disk_usage_human;
-    const threadsValue = data.threads ?? data.thread_count ?? data.bot_threads;
+    const usage = data.usage || {};
+    const cpuValue = data.cpu_percent ?? usage.cpu_percent ?? usage.cpu ?? data.cpu ?? data.cpu_usage ?? data.system_cpu ?? data.system_cpu_percent;
+    const memValue = data.memory_usage ?? usage.ram_percent ?? usage.ram ?? usage.memory ?? usage.memory_usage ?? data.memory ?? data.ram ?? data.container_ram ?? data.mem_usage;
+    const rssValue = data.rss_usage ?? usage.process_rss_bytes ?? usage.rss ?? usage.bot_rss;
+    const botCpuValue = data.bot_cpu ?? usage.process_cpu_percent ?? usage.process_cpu ?? data.process_cpu ?? data.bot_cpu_percent ?? data.process_cpu_percent;
+    const storageValue = data.storage ?? usage.storage_percent ?? usage.storage_used_bytes ?? usage.disk_usage ?? usage.bot_storage ?? data.disk_usage ?? data.bot_storage ?? data.storage_usage ?? data.disk_usage_human;
+    const threadsValue = data.threads ?? usage.threads ?? data.thread_count ?? data.bot_threads;
 
     setText("status-cpu", cpuValue !== null && cpuValue !== undefined ? `${cpuValue}%` : "—");
-    setText("status-ram", memValue || "—");
-    setText("status-bot-rss", rssValue || "—");
+    setText("status-ram", memValue !== null && memValue !== undefined ? `${memValue}${typeof memValue === 'number' && memValue <= 100 ? '%' : ''}` : "—");
+    setText("status-bot-rss", rssValue !== null && rssValue !== undefined ? `${formatBytes(rssValue)}` : "—");
     setText("status-bot-cpu", botCpuValue !== null && botCpuValue !== undefined ? `${botCpuValue}%` : "—");
-    setText("status-storage", storageValue || "—");
+    setText("status-storage", storageValue !== null && storageValue !== undefined ? `${storageValue}${typeof storageValue === 'number' && storageValue <= 100 ? '%' : ''}` : "—");
     setText("status-threads", threadsValue || "—");
     setText("status-hero-guilds", fmtNumber(data.guilds));
     setText("status-hero-users", fmtNumber(data.users));

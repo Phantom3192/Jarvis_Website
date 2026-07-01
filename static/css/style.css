@@ -592,8 +592,7 @@ footer .wrap {
   .docs-cat-head { padding: 16px 20px; }
   .docs-cmd-table tr { padding: 12px 0; }
   .hero {
-    background-size: contain;
-    background-position: top center;
+    background-image: linear-gradient(180deg, rgba(9,12,16,0.92) 0%, rgba(9,12,16,0.85) 45%, var(--bg) 100%);
   }
 }
 

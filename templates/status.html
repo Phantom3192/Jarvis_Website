@@ -70,68 +70,77 @@
 <section class="status-section">
   <div class="wrap">
     <div class="status-grid">
-      <article class="status-card status-card-feature">
-        <div class="status-card-head">
-          <div>
-            <p class="eyebrow">Telemetry</p>
-            <h2>Performance snapshot</h2>
+      <div class="status-grid-left">
+        <article class="status-card status-card-feature">
+          <div class="status-card-head">
+            <div>
+              <p class="eyebrow">Telemetry</p>
+              <h2>Performance snapshot</h2>
+            </div>
           </div>
-        </div>
-        <div class="status-metric-grid">
-          <div class="metric">
-            <div class="metric-value" id="status-guilds">{{ stats.guilds }}</div>
-            <div class="metric-label">Servers</div>
+          <div class="status-metric-grid">
+            <div class="metric">
+              <div class="metric-value" id="status-guilds">{{ stats.guilds }}</div>
+              <div class="metric-label">Servers</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value" id="status-users">{{ stats.users }}</div>
+              <div class="metric-label">Users seen</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value" id="status-uptime">{{ stats.uptime_human }}</div>
+              <div class="metric-label">Uptime</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value" id="status-latency">{{ stats.latency_ms }} ms</div>
+              <div class="metric-label">Latency</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value" id="status-cpu">{{ stats.cpu_percent if stats.cpu_percent is not none else '—' }}%</div>
+              <div class="metric-label">CPU</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value" id="status-ram">{{ stats.ram_percent if stats.ram_percent is not none else (stats.memory_usage if stats.memory_usage is not none else '—') }}</div>
+              <div class="metric-label">Container RAM</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value" id="status-bot-rss">{{ stats.rss_usage if stats.rss_usage is not none else '—' }}</div>
+              <div class="metric-label">Bot RSS</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value" id="status-bot-cpu">{{ stats.bot_cpu if stats.bot_cpu is not none else '—' }}%</div>
+              <div class="metric-label">Bot CPU</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value" id="status-storage">{{ stats.storage_percent if stats.storage_percent is not none else (stats.storage if stats.storage is not none else '—') }}</div>
+              <div class="metric-label">Bot Storage</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value" id="status-threads">{{ stats.threads if stats.threads is not none else '—' }}</div>
+              <div class="metric-label">Threads</div>
+            </div>
           </div>
-          <div class="metric">
-            <div class="metric-value" id="status-users">{{ stats.users }}</div>
-            <div class="metric-label">Users seen</div>
-          </div>
-          <div class="metric">
-            <div class="metric-value" id="status-uptime">{{ stats.uptime_human }}</div>
-            <div class="metric-label">Uptime</div>
-          </div>
-          <div class="metric">
-            <div class="metric-value" id="status-latency">{{ stats.latency_ms }} ms</div>
-            <div class="metric-label">Latency</div>
-          </div>
-          <div class="metric">
-            <div class="metric-value" id="status-cpu">{{ stats.cpu_percent if stats.cpu_percent is not none else '—' }}%</div>
-            <div class="metric-label">CPU</div>
-          </div>
-          <div class="metric">
-            <div class="metric-value" id="status-ram">{{ stats.ram_percent if stats.ram_percent is not none else (stats.memory_usage if stats.memory_usage is not none else '—') }}</div>
-            <div class="metric-label">Container RAM</div>
-          </div>
-          <div class="metric">
-            <div class="metric-value" id="status-bot-rss">{{ stats.rss_usage if stats.rss_usage is not none else '—' }}</div>
-            <div class="metric-label">Bot RSS</div>
-          </div>
-          <div class="metric">
-            <div class="metric-value" id="status-bot-cpu">{{ stats.bot_cpu if stats.bot_cpu is not none else '—' }}%</div>
-            <div class="metric-label">Bot CPU</div>
-          </div>
-          <div class="metric">
-            <div class="metric-value" id="status-storage">{{ stats.storage_percent if stats.storage_percent is not none else (stats.storage if stats.storage is not none else '—') }}</div>
-            <div class="metric-label">Bot Storage</div>
-          </div>
-          <div class="metric">
-            <div class="metric-value" id="status-threads">{{ stats.threads if stats.threads is not none else '—' }}</div>
-            <div class="metric-label">Threads</div>
-          </div>
-        </div>
+        </article>
 
-        <div class="status-sparkline-card">
-          <div class="status-sparkline-head">
+        <article class="status-card status-card-feature status-card-trend">
+          <div class="status-card-head">
             <div>
               <p class="eyebrow">Trend</p>
               <h2>Uptime history</h2>
             </div>
-            <div class="sparkline-meta" id="sparkline-latest">Latest: {{ stats.uptime_human }}</div>
           </div>
-          <div class="sparkline-graph" id="sparkline-graph"></div>
-          <p class="sparkline-note">This chart is built locally in your browser from recent uptime samples.</p>
-        </div>
-      </article>
+          <div class="status-sparkline-card">
+            <div class="status-sparkline-head">
+              <div>
+                <p class="eyebrow">Latest sample</p>
+                <div class="sparkline-meta" id="sparkline-latest">Latest: {{ stats.uptime_human }}</div>
+              </div>
+            </div>
+            <div class="sparkline-graph" id="sparkline-graph"></div>
+            <p class="sparkline-note">This chart is built locally in your browser from recent uptime samples.</p>
+          </div>
+        </article>
+      </div>
 
       <article class="status-card">
         <div class="status-card-head">

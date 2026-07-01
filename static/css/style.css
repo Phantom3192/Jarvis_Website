@@ -523,24 +523,30 @@ footer .wrap {
 .status-hero-grid-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .status-section { padding: 24px 0 100px; }
 .status-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; }
+.status-grid-left { display: grid; gap: 24px; }
 .status-card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 28px;
 }
-.status-card-feature { background: linear-gradient(180deg, rgba(17, 22, 29, 0.95), rgba(17, 22, 29, 0.9)); }
+.status-card-feature {
+  background: linear-gradient(180deg, rgba(17, 22, 29, 0.95), rgba(17, 22, 29, 0.9));
+}
+.status-card-trend {
+  padding-top: 24px;
+}
 .status-card-head { margin-bottom: 24px; }
 .status-card-head h2 { font-size: 22px; margin-top: 6px; }
 .status-metric-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
 }
 .metric {
   padding: 18px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.026);
 }
 .metric-value {
@@ -556,6 +562,28 @@ footer .wrap {
   text-transform: uppercase;
   color: var(--text-faint);
   margin-top: 6px;
+}
+.status-sparkline-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.status-sparkline-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+.sparkline-meta {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.sparkline-note {
+  color: var(--text-dim);
+  font-size: 14px;
+  margin: 0;
 }
 .status-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; color: var(--text-dim); }
 .status-list li { display: flex; gap: 10px; align-items: flex-start; line-height: 1.7; }

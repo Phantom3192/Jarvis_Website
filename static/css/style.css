@@ -38,7 +38,7 @@
 * { box-sizing: border-box; }
 
 html { scroll-behavior: smooth; }
-
+html, body { overflow-x: hidden; max-width: 100%; }
 body {
   margin: 0;
   background: var(--bg);
@@ -576,6 +576,19 @@ footer .wrap {
   .dev-links { justify-content: center; }
   .footer .wrap { flex-direction: column; gap: 16px; align-items: flex-start; }
   .footer-links { flex-wrap: wrap; row-gap: 10px; }
+  .docs-cmd-table, .docs-cmd-table tbody, .docs-cmd-table tr, .docs-cmd-table td {
+    display: block;
+    width: 100%;
+  }
+  .docs-cmd-table tr { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .docs-cmd-table tr.divider, .docs-cmd-table tr.spacer { border-bottom: none; padding: 0; }
+  .docs-cmd-table td:first-child {
+    white-space: normal;
+    word-break: break-word;
+    padding: 0 0 4px;
+    width: 100%;
+  }
+  .docs-cmd-table td:last-child { padding: 0; }
 }
 
 /* Keyboard focus visibility */

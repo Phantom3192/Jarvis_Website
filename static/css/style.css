@@ -318,6 +318,17 @@ h1, h2, h3 {
 }
 .telemetry-value.dim { color: var(--text); }
 
+.telemetry-usage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+.telemetry-usage .telemetry-item { padding: 14px 28px; }
+.telemetry-usage .telemetry-value { font-size: 17px; }
+.telemetry-usage.unavailable { display: none; }
+
 /* ── Sections ────────────────────────────────────────────── */
 
 section { padding: 84px 0; }

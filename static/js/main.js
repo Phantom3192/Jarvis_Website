@@ -7,6 +7,31 @@ function fmtNumber(n) {
   return n.toLocaleString("en-US");
 }
 
+function fmtBytes(n) {
+  if (n === null || n === undefined) return "—";
+  if (n >= 1073741824) return `${(n / 1073741824).toFixed(1)} GB`;
+  return `${(n / 1048576).toFixed(1)} MB`;
+}
+
+function applyUsage(usage) {
+  const panel = document.getElementById("telemetry-usage");
+  if (!panel) return;
+
+  if (!usage || !usage.available) {
+    panel.classList.add("unavailable");
+    return;
+  }
+  panel.classList.remove("unavailable");
+
+  document.getElementById("t-cpu").textContent =
+    usage.cpu_percent !== null && usage.cpu_percent !== undefined ? `${usage.cpu_percent}%` : "—";
+  document.getElementById("t-ram").textContent =
+    `${fmtBytes(usage.ram_used_bytes)} / ${fmtBytes(usage.ram_total_bytes)} (${usage.ram_percent}%)`;
+  document.getElementById("t-storage").textContent =
+    `${fmtBytes(usage.storage_used_bytes)} / ${fmtBytes(usage.storage_limit_bytes)} (${usage.storage_percent}%)`;
+  document.getElementById("t-threads").textContent = fmtNumber(usage.threads);
+}
+
 async function refreshStats() {
   try {
     const res = await fetch("/api/stats", { cache: "no-store" });
@@ -26,12 +51,15 @@ async function refreshStats() {
     document.getElementById("t-uptime").textContent = data.uptime_human || "—";
     document.getElementById("t-latency").textContent =
       data.latency_ms !== null && data.latency_ms !== undefined ? `${data.latency_ms} ms` : "—";
+
+    applyUsage(data.usage);
   } catch (err) {
     document.getElementById("t-status").textContent = "Unreachable";
     const coreLabel = document.getElementById("core-online-label");
     if (coreLabel) coreLabel.textContent = "Unreachable";
     const coreDot = document.querySelector(".core-readout .status-dot");
     if (coreDot) coreDot.classList.add("offline");
+    applyUsage(null);
   }
 }
 

@@ -711,6 +711,26 @@ footer .wrap {
   .dev-links { justify-content: center; }
   .footer .wrap { flex-direction: column; gap: 16px; align-items: flex-start; }
   .footer-links { flex-wrap: wrap; row-gap: 10px; }
+  .docs-layout { grid-template-columns: 1fr; }
+  .docs-nav {
+    position: static;
+    top: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: none;
+    overflow: visible;
+    margin-bottom: 22px;
+  }
+  .docs-nav-item {
+    flex: 1 1 calc(50% - 8px);
+    min-width: calc(50% - 8px);
+    border-left: none;
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .docs-nav-item.active { border-left-color: transparent; border-bottom: 2px solid var(--cyan); background: var(--cyan-soft); }
   .docs-cmd-table, .docs-cmd-table tbody, .docs-cmd-table tr, .docs-cmd-table td {
     display: block;
     width: 100%;

@@ -57,7 +57,6 @@ templates.env.filters["md_bold"] = lambda s: re.sub(r"\*\*(.+?)\*\*", r"<strong>
 _FALLBACK_STATS = {
     "guilds": 0, "users": 0, "uptime_human": "—",
     "latency_ms": None, "online": False, "bot_name": DEFAULT_BOT_NAME,
-    "usage": {"available": False},
 }
 
 _categories_cache: dict = {"data": {}, "bot_name": DEFAULT_BOT_NAME, "ts": 0.0}

@@ -461,6 +461,119 @@ footer .wrap {
 .legal-content a:hover { text-decoration: underline; }
 .legal-see-also { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--line); font-size: 14px; }
 
+/* ── Status page ───────────────────────────────────────────── */
+
+.status-hero { padding: 78px 0 58px; }
+.status-hero-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 32px;
+  align-items: center;
+}
+.status-lead { color: var(--text-dim); font-size: 16px; max-width: 60ch; margin: 0 0 24px; }
+.status-pill-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-dim);
+}
+.status-pill::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 8px 1px var(--amber);
+}
+.status-pill.online { color: var(--green); }
+.status-pill.online::before { background: var(--green); box-shadow: 0 0 8px 1px var(--green); }
+.status-pill.offline { color: #ff6b6b; }
+.status-pill.offline::before { background: #ff6b6b; box-shadow: 0 0 8px 1px #ff6b6b; }
+.status-meta { font-family: var(--font-mono); color: var(--text-faint); font-size: 12px; }
+.status-hero-card {
+  background: linear-gradient(135deg, rgba(94, 231, 255, 0.12), rgba(255, 180, 84, 0.08));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.status-card-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 6px;
+}
+.status-card-value {
+  font-size: 28px;
+  font-family: var(--font-display);
+  color: var(--text);
+}
+.status-hero-grid-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.status-section { padding: 24px 0 100px; }
+.status-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; }
+.status-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px;
+}
+.status-card-feature { background: linear-gradient(180deg, rgba(17, 22, 29, 0.95), rgba(17, 22, 29, 0.9)); }
+.status-card-head { margin-bottom: 24px; }
+.status-card-head h2 { font-size: 22px; margin-top: 6px; }
+.status-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.metric {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.026);
+}
+.metric-value {
+  font-size: 24px;
+  font-family: var(--font-display);
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+.metric-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-top: 6px;
+}
+.status-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; color: var(--text-dim); }
+.status-list li { display: flex; gap: 10px; align-items: flex-start; line-height: 1.7; }
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--cyan-soft);
+  color: var(--cyan);
+  flex: none;
+  margin-top: 3px;
+}
+
 /* ── About the Developer page ───────────────────────────────── */
 
 .dev-section { padding: 64px 0 100px; }
@@ -563,6 +676,7 @@ footer .wrap {
   .docs-layout { grid-template-columns: 1fr; }
   .docs-nav { position: static; flex-direction: row; flex-wrap: wrap; max-height: none; }
   .telemetry-item { flex: 1 1 40%; }
+  .status-hero-grid, .status-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 720px) {
   .wrap { padding: 0 18px; }
@@ -594,6 +708,8 @@ footer .wrap {
   .hero {
     background-image: linear-gradient(180deg, rgba(9,12,16,0.92) 0%, rgba(9,12,16,0.85) 45%, var(--bg) 100%);
   }
+  .status-hero-grid-inline, .status-metric-grid { grid-template-columns: 1fr; }
+  .status-card { padding: 22px; }
 }
 
 /* Keyboard focus visibility */

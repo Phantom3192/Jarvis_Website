@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bot Status — {{ bot_name }}</title>
+<meta name="description" content="See the live status, servers, users, uptime, and latency for {{ bot_name }}.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/static/img/icon-192.png">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a href="/" class="nav-brand"><span class="dot"></span>{{ bot_name }}</a>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/status">Status</a>
+      <a href="/about">About</a>
+    </div>
+    <div class="nav-ctas">
+      <a class="nav-cta nav-cta-ghost" href="{{ support_server_url }}">Official Server</a>
+      <a class="nav-cta" href="{{ invite_url }}">Add to Discord</a>
+    </div>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="nav-mobile" id="navMobile"></div>
+</nav>
+
+<header class="legal-hero status-hero">
+  <div class="wrap status-hero-grid">
+    <div>
+      <p class="eyebrow">Bot status</p>
+      <h1>Live system overview</h1>
+      <p class="status-lead">A clearer readout of {{ bot_name }}'s health, reach, and responsiveness — pulled directly from the bot API.</p>
+      <div class="status-pill-row">
+        <span class="status-pill {% if stats.online %}online{% else %}offline{% endif %}" id="status-pill">{{ 'Online' if stats.online else 'Reconnecting' }}</span>
+        <span class="status-meta">Updated from the public bot API</span>
+      </div>
+    </div>
+
+    <div class="status-hero-card">
+      <div>
+        <div class="status-card-label">Current state</div>
+        <div class="status-card-value" id="status-state">{{ 'Operational' if stats.online else 'Recovering' }}</div>
+      </div>
+      <div class="status-hero-grid-inline">
+        <div>
+          <div class="status-card-label">Servers</div>
+          <div class="status-card-value" id="status-hero-guilds">{{ stats.guilds }}</div>
+        </div>
+        <div>
+          <div class="status-card-label">Users</div>
+          <div class="status-card-value" id="status-hero-users">{{ stats.users }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="status-section">
+  <div class="wrap">
+    <div class="status-grid">
+      <article class="status-card status-card-feature">
+        <div class="status-card-head">
+          <div>
+            <p class="eyebrow">Telemetry</p>
+            <h2>Performance snapshot</h2>
+          </div>
+        </div>
+        <div class="status-metric-grid">
+          <div class="metric">
+            <div class="metric-value" id="status-guilds">{{ stats.guilds }}</div>
+            <div class="metric-label">Servers</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="status-users">{{ stats.users }}</div>
+            <div class="metric-label">Users seen</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="status-uptime">{{ stats.uptime_human }}</div>
+            <div class="metric-label">Uptime</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="status-latency">{{ stats.latency_ms }} ms</div>
+            <div class="metric-label">Latency</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="status-card">
+        <div class="status-card-head">
+          <div>
+            <p class="eyebrow">API</p>
+            <h2>What this page uses</h2>
+          </div>
+        </div>
+        <ul class="status-list">
+          <li><span class="status-tag">Live</span> The values on this page come from the bot's public API endpoint.</li>
+          <li><span class="status-tag">Reliable</span> If the bot is momentarily unreachable, the page falls back to safe defaults.</li>
+          <li><span class="status-tag">Fast</span> The status is refreshed automatically so the page stays current.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-brand">{{ bot_name }} — system console</div>
+    <div class="footer-links">
+      <a href="{{ invite_url }}">Add to Discord</a>
+      <a href="/status">Status</a>
+      <a href="/about">About</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+function fmtNumber(value) {
+  if (value === null || value === undefined) return "—";
+  return Number(value).toLocaleString("en-US");
+}
+
+async function refreshStatusPage() {
+  try {
+    const res = await fetch("/api/stats", { cache: "no-store" });
+    if (!res.ok) throw new Error("bad response");
+    const data = await res.json();
+
+    const setText = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    };
+
+    setText("status-pill", data.online ? "Online" : "Reconnecting");
+    setText("status-state", data.online ? "Operational" : "Recovering");
+    setText("status-guilds", fmtNumber(data.guilds));
+    setText("status-users", fmtNumber(data.users));
+    setText("status-uptime", data.uptime_human || "—");
+    setText("status-latency", data.latency_ms !== null && data.latency_ms !== undefined ? `${data.latency_ms} ms` : "—");
+    setText("status-hero-guilds", fmtNumber(data.guilds));
+    setText("status-hero-users", fmtNumber(data.users));
+
+    const pill = document.getElementById("status-pill");
+    if (pill) {
+      pill.className = `status-pill ${data.online ? "online" : "offline"}`;
+    }
+  } catch (err) {
+    const pill = document.getElementById("status-pill");
+    if (pill) {
+      pill.textContent = "Unreachable";
+      pill.className = "status-pill offline";
+    }
+    const setText = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    };
+    setText("status-state", "Unavailable");
+  }
+}
+
+refreshStatusPage();
+setInterval(refreshStatusPage, 15000);
+</script>
+
+</body>
+</html>

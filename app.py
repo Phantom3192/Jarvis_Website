@@ -122,6 +122,22 @@ async def about(request: Request):
     )
 
 
+@app.get("/status")
+async def status_page(request: Request):
+    stats = await _fetch_json("/api/stats") or _FALLBACK_STATS
+    _, bot_name = await _get_categories()
+    return templates.TemplateResponse(
+        "status.html",
+        {
+            "request": request,
+            "stats": stats,
+            "invite_url": INVITE_URL,
+            "support_server_url": SUPPORT_SERVER_URL,
+            "bot_name": bot_name,
+        },
+    )
+
+
 @app.get("/privacy")
 async def privacy(request: Request):
     _, bot_name = await _get_categories()

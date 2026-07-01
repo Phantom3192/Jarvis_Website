@@ -174,12 +174,19 @@ async function refreshStatusPage() {
     setText("status-users", fmtNumber(data.users));
     setText("status-uptime", data.uptime_human || "—");
     setText("status-latency", data.latency_ms !== null && data.latency_ms !== undefined ? `${data.latency_ms} ms` : "—");
-    setText("status-cpu", data.cpu_percent !== null && data.cpu_percent !== undefined ? `${data.cpu_percent}%` : "—");
-    setText("status-ram", data.memory_usage || "—");
-    setText("status-bot-rss", data.rss_usage || "—");
-    setText("status-bot-cpu", data.bot_cpu !== null && data.bot_cpu !== undefined ? `${data.bot_cpu}%` : "—");
-    setText("status-storage", data.storage || "—");
-    setText("status-threads", data.threads || "—");
+    const cpuValue = data.cpu_percent ?? data.cpu ?? data.cpu_usage ?? data.system_cpu ?? data.system_cpu_percent;
+    const memValue = data.memory_usage ?? data.memory ?? data.ram ?? data.container_ram ?? data.mem_usage;
+    const rssValue = data.rss_usage ?? data.rss ?? data.bot_rss;
+    const botCpuValue = data.bot_cpu ?? data.process_cpu ?? data.bot_cpu_percent ?? data.process_cpu_percent;
+    const storageValue = data.storage ?? data.disk_usage ?? data.bot_storage ?? data.storage_usage ?? data.disk_usage_human;
+    const threadsValue = data.threads ?? data.thread_count ?? data.bot_threads;
+
+    setText("status-cpu", cpuValue !== null && cpuValue !== undefined ? `${cpuValue}%` : "—");
+    setText("status-ram", memValue || "—");
+    setText("status-bot-rss", rssValue || "—");
+    setText("status-bot-cpu", botCpuValue !== null && botCpuValue !== undefined ? `${botCpuValue}%` : "—");
+    setText("status-storage", storageValue || "—");
+    setText("status-threads", threadsValue || "—");
     setText("status-hero-guilds", fmtNumber(data.guilds));
     setText("status-hero-users", fmtNumber(data.users));
 

@@ -72,6 +72,23 @@ _FALLBACK_STATS = {
 _categories_cache: dict = {"data": {}, "bot_name": DEFAULT_BOT_NAME, "ts": 0.0}
 
 
+def _normalize_stats(raw_stats: dict) -> dict:
+    def pick(*keys, fallback=None):
+        for key in keys:
+            if key in raw_stats and raw_stats[key] not in (None, ""):
+                return raw_stats[key]
+        return fallback
+
+    return {
+        "cpu_percent": pick("cpu", "cpu_percent", "cpu_usage", "system_cpu", "system_cpu_percent"),
+        "memory_usage": pick("memory", "ram", "container_ram", "memory_usage", "mem_usage"),
+        "rss_usage": pick("rss", "bot_rss", "rss_usage"),
+        "bot_cpu": pick("bot_cpu", "process_cpu", "bot_cpu_percent", "process_cpu_percent"),
+        "storage": pick("storage", "disk_usage", "bot_storage", "storage_usage", "disk_usage_human"),
+        "threads": pick("threads", "thread_count", "bot_threads"),
+    }
+
+
 async def _fetch_json(path: str, timeout: float = REQUEST_TIMEOUT) -> dict | None:
     if not BOT_API_URL:
         return None
@@ -135,7 +152,8 @@ async def about(request: Request):
 @app.get("/status")
 async def status_page(request: Request):
     raw_stats = await _fetch_json("/api/stats") or {}
-    stats = {**_FALLBACK_STATS, **raw_stats}
+    normalized = _normalize_stats(raw_stats)
+    stats = {**_FALLBACK_STATS, **raw_stats, **normalized}
     _, bot_name = await _get_categories()
     return templates.TemplateResponse(
         "status.html",

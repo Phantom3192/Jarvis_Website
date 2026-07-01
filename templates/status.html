@@ -94,6 +94,30 @@
             <div class="metric-value" id="status-latency">{{ stats.latency_ms }} ms</div>
             <div class="metric-label">Latency</div>
           </div>
+          <div class="metric">
+            <div class="metric-value" id="status-cpu">{{ stats.cpu_percent if stats.cpu_percent is not none else '—' }}%</div>
+            <div class="metric-label">CPU</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="status-ram">{{ stats.memory_usage if stats.memory_usage is not none else '—' }}</div>
+            <div class="metric-label">Container RAM</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="status-bot-rss">{{ stats.rss_usage if stats.rss_usage is not none else '—' }}</div>
+            <div class="metric-label">Bot RSS</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="status-bot-cpu">{{ stats.bot_cpu if stats.bot_cpu is not none else '—' }}%</div>
+            <div class="metric-label">Bot CPU</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="status-storage">{{ stats.storage if stats.storage is not none else '—' }}</div>
+            <div class="metric-label">Bot Storage</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="status-threads">{{ stats.threads if stats.threads is not none else '—' }}</div>
+            <div class="metric-label">Threads</div>
+          </div>
         </div>
       </article>
 
@@ -150,6 +174,12 @@ async function refreshStatusPage() {
     setText("status-users", fmtNumber(data.users));
     setText("status-uptime", data.uptime_human || "—");
     setText("status-latency", data.latency_ms !== null && data.latency_ms !== undefined ? `${data.latency_ms} ms` : "—");
+    setText("status-cpu", data.cpu_percent !== null && data.cpu_percent !== undefined ? `${data.cpu_percent}%` : "—");
+    setText("status-ram", data.memory_usage || "—");
+    setText("status-bot-rss", data.rss_usage || "—");
+    setText("status-bot-cpu", data.bot_cpu !== null && data.bot_cpu !== undefined ? `${data.bot_cpu}%` : "—");
+    setText("status-storage", data.storage || "—");
+    setText("status-threads", data.threads || "—");
     setText("status-hero-guilds", fmtNumber(data.guilds));
     setText("status-hero-users", fmtNumber(data.users));
 

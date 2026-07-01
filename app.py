@@ -55,8 +55,18 @@ templates.env.filters["md_bold"] = lambda s: re.sub(r"\*\*(.+?)\*\*", r"<strong>
 
 # Shown if the bot has never successfully responded yet (first deploy, etc.)
 _FALLBACK_STATS = {
-    "guilds": 0, "users": 0, "uptime_human": "—",
-    "latency_ms": None, "online": False, "bot_name": DEFAULT_BOT_NAME,
+    "guilds": 0,
+    "users": 0,
+    "uptime_human": "—",
+    "latency_ms": None,
+    "online": False,
+    "bot_name": DEFAULT_BOT_NAME,
+    "cpu_percent": None,
+    "memory_usage": "—",
+    "rss_usage": "—",
+    "bot_cpu": None,
+    "storage": "—",
+    "threads": "—",
 }
 
 _categories_cache: dict = {"data": {}, "bot_name": DEFAULT_BOT_NAME, "ts": 0.0}
@@ -124,7 +134,8 @@ async def about(request: Request):
 
 @app.get("/status")
 async def status_page(request: Request):
-    stats = await _fetch_json("/api/stats") or _FALLBACK_STATS
+    raw_stats = await _fetch_json("/api/stats") or {}
+    stats = {**_FALLBACK_STATS, **raw_stats}
     _, bot_name = await _get_categories()
     return templates.TemplateResponse(
         "status.html",

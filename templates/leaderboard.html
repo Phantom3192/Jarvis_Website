@@ -51,17 +51,17 @@
   <div class="wrap">
     {% if leaderboard %}
     <article class="status-card status-card-feature">
-      <ol class="lb-list">
+      <ul class="lb-list">
         {% for entry in leaderboard %}
         <li class="lb-row {% if entry.rank <= 3 %}lb-row-top{% endif %}">
           <span class="lb-rank lb-rank-{{ entry.rank }}">
-            {% if entry.rank == 1 %}🥇{% elif entry.rank == 2 %}🥈{% elif entry.rank == 3 %}🥉{% else %}#{{ entry.rank }}{% endif %}
+            {% if entry.rank == 1 %}🥇{% elif entry.rank == 2 %}🥈{% elif entry.rank == 3 %}🥉{% else %}{{ entry.rank }}{% endif %}
           </span>
           <span class="lb-name">{{ entry.name }}</span>
           <span class="lb-balance">{{ "{:,}".format(entry.credits) }} {{ currency_emoji }}</span>
         </li>
         {% endfor %}
-      </ol>
+      </ul>
     </article>
     {% else %}
     <article class="status-card status-card-feature">
@@ -104,4 +104,4 @@
 
 <script src="/static/js/main.js"></script>
 </body>
-</html>
+</html> 

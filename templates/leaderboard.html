@@ -57,11 +57,6 @@
           <span class="lb-rank lb-rank-{{ entry.rank }}">
             {% if entry.rank == 1 %}🥇{% elif entry.rank == 2 %}🥈{% elif entry.rank == 3 %}🥉{% else %}#{{ entry.rank }}{% endif %}
           </span>
-          {% if entry.avatar_url %}
-          <img class="lb-avatar" src="{{ entry.avatar_url }}" alt="" loading="lazy">
-          {% else %}
-          <span class="lb-avatar lb-avatar-fallback">{{ entry.name[0]|upper }}</span>
-          {% endif %}
           <span class="lb-name">{{ entry.name }}</span>
           <span class="lb-balance">{{ "{:,}".format(entry.credits) }} {{ currency_emoji }}</span>
         </li>

@@ -827,23 +827,6 @@ code {
   text-align: center;
 }
 .lb-rank-1, .lb-rank-2, .lb-rank-3 { font-size: 20px; }
-.lb-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 1px solid var(--line-bright);
-}
-.lb-avatar-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-raised);
-  color: var(--cyan);
-  font-family: var(--font-display);
-  font-weight: 600;
-}
 .lb-name { flex: 1; font-weight: 500; color: var(--text); }
 .lb-balance {
   font-family: var(--font-mono);

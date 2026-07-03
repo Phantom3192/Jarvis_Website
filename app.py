@@ -16,9 +16,11 @@ scaling — the only coupling is one env var (BOT_API_URL).
 If the bot is unreachable (deploying, crashed, restarting), the site
 still renders fine using cached/fallback data instead of failing.
 """
+import asyncio
 import os
 import re
 import time
+from datetime import datetime
 from pathlib import Path
 
 import httpx
@@ -43,6 +45,29 @@ INVITE_URL = (
 SUPPORT_SERVER_URL = os.getenv("SUPPORT_SERVER_URL", "#")  # e.g. https://discord.gg/your-invite-code
 LEGAL_LAST_UPDATED = os.getenv("LEGAL_LAST_UPDATED", "July 1, 2026")
 
+# ── Auto-updating changelog ─────────────────────────────────────────────────
+# Rather than requiring a manual CHANGELOG.md edit for every change, the
+# /changelog page pulls real commit history straight from GitHub's public
+# API. Push a commit -> it shows up here on the next cache refresh, no
+# redeploy or file edit needed. CHANGELOG.md (if present) is still shown
+# above this as optional hand-written "highlight" entries for major
+# releases — the commit feed below it is what actually stays current
+# automatically.
+CHANGELOG_REPOS = [
+    r.strip() for r in os.getenv(
+        "CHANGELOG_GITHUB_REPOS", "Phantom3192/Jarvis-4.0,Phantom3192/Jarvis_Website"
+    ).split(",") if r.strip()
+]
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")  # optional — raises the API rate
+                                                # limit from 60/hr to 5000/hr.
+                                                # Not required for a couple of
+                                                # low-traffic public repos.
+COMMITS_PER_REPO = 15
+COMMITS_CACHE_TTL = 900  # seconds (15 min) — commits don't need to appear
+                          # instantly; this just needs to be short enough
+                          # that a push shows up same-day without hammering
+                          # GitHub's API on every visitor.
+
 HIGHLIGHT_KEYS = ["🤖 AI", "🧠 Memory", "♟️ Games", "🎵 Music", "🪙 Jarvis Credits", "⏰ Reminders"]
 
 REQUEST_TIMEOUT = 5.0       # seconds — fail fast if the bot is slow/down
@@ -61,6 +86,17 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.filters["md_bold"] = lambda s: re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s or "")
 templates.env.filters["md_code"] = lambda s: re.sub(r"`(.+?)`", r"<code>\1</code>", s or "")
+
+
+def _fmt_commit_date(iso: str) -> str:
+    try:
+        dt = datetime.strptime(iso, "%Y-%m-%dT%H:%M:%SZ")
+        return dt.strftime("%b %-d, %Y")
+    except (ValueError, TypeError):
+        return iso or ""
+
+
+templates.env.filters["commit_date"] = _fmt_commit_date
 
 # Shown if the bot has never successfully responded yet (first deploy, etc.)
 _FALLBACK_STATS = {
@@ -85,6 +121,7 @@ _FALLBACK_STATS = {
 _categories_cache: dict = {"data": {}, "bot_name": DEFAULT_BOT_NAME, "ts": 0.0}
 _stats_cache: dict = {"data": None, "ts": 0.0}
 _leaderboard_cache: dict = {"data": None, "ts": 0.0}
+_commits_cache: dict = {"data": [], "ts": 0.0}
 
 
 def _load_changelog() -> list[dict]:
@@ -203,6 +240,68 @@ async def _get_leaderboard() -> dict:
     return _leaderboard_cache["data"] or {"leaderboard": [], "currency_name": "Jarvis Credit", "currency_emoji": "🪙"}
 
 
+async def _fetch_repo_commits(client: httpx.AsyncClient, repo: str) -> list[dict]:
+    """Fetch recent commits for one 'owner/repo' from the public GitHub API."""
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": "jarvis-website"}
+    if GITHUB_TOKEN:
+        headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
+
+    try:
+        res = await client.get(
+            f"https://api.github.com/repos/{repo}/commits",
+            params={"per_page": COMMITS_PER_REPO},
+            headers=headers,
+            timeout=REQUEST_TIMEOUT,
+        )
+        res.raise_for_status()
+        raw_commits = res.json()
+    except Exception:
+        return []
+
+    repo_label = repo.split("/")[-1]
+    parsed = []
+    for c in raw_commits:
+        try:
+            commit = c["commit"]
+            message = commit["message"].split("\n", 1)[0].strip()
+            if message.lower().startswith("merge "):
+                continue  # skip noisy merge commits
+            parsed.append({
+                "repo": repo_label,
+                "message": message,
+                "sha": c["sha"][:7],
+                "url": c.get("html_url", ""),
+                "date": commit["author"]["date"],  # ISO 8601, e.g. 2026-07-01T12:34:56Z
+                "author": commit["author"].get("name", ""),
+            })
+        except (KeyError, TypeError):
+            continue
+    return parsed
+
+
+async def _get_recent_commits() -> list[dict]:
+    """Cached, merged, newest-first commit feed across CHANGELOG_REPOS."""
+    now = time.time()
+    if _commits_cache["data"] and now - _commits_cache["ts"] < COMMITS_CACHE_TTL:
+        return _commits_cache["data"]
+
+    async with httpx.AsyncClient() as client:
+        results = await asyncio.gather(
+            *(_fetch_repo_commits(client, repo) for repo in CHANGELOG_REPOS)
+        )
+
+    merged = [commit for repo_commits in results for commit in repo_commits]
+    if not merged:
+        # GitHub unreachable/rate-limited — serve stale cache rather than a
+        # blank page.
+        return _commits_cache["data"]
+
+    merged.sort(key=lambda c: c["date"], reverse=True)
+    _commits_cache["data"] = merged
+    _commits_cache["ts"] = now
+    return merged
+
+
 async def _get_categories() -> tuple[dict, str]:
     """Categories barely change, so cache them and only refetch every
     CATEGORIES_CACHE_TTL seconds — keeps page loads fast and avoids
@@ -297,16 +396,24 @@ async def api_leaderboard():
 @app.get("/changelog")
 async def changelog(request: Request):
     _, bot_name = await _get_categories()
+    commits = await _get_recent_commits()
     return templates.TemplateResponse(
         "changelog.html",
         {
             "request": request,
             "entries": CHANGELOG_ENTRIES,
+            "commits": commits,
             "invite_url": INVITE_URL,
             "support_server_url": SUPPORT_SERVER_URL,
             "bot_name": bot_name,
         },
     )
+
+
+@app.get("/api/changelog")
+async def api_changelog():
+    """JSON feed of the same auto-pulled commit history shown on /changelog."""
+    return JSONResponse({"commits": await _get_recent_commits()})
 
 
 @app.get("/guide")

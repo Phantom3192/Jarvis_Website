@@ -918,8 +918,56 @@ code {
 .cl-entry-body ul { margin: 0; padding-left: 20px; color: var(--text-dim); font-size: 14.5px; line-height: 1.75; }
 .cl-entry-body ul li { margin-bottom: 6px; }
 
+.cl-commits-lead { color: var(--text-faint); font-size: 13.5px; margin: 6px 0 24px; }
+
+.cl-commit-list { list-style: none; margin: 0; padding: 0; max-width: 84ch; }
+.cl-commit-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.cl-commit-row:first-child { border-top: none; }
+.cl-commit-date {
+  flex-shrink: 0;
+  width: 84px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.cl-commit-repo {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cyan);
+  background: var(--cyan-soft);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+.cl-commit-msg {
+  flex: 1;
+  color: var(--text-dim);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+a.cl-commit-msg:hover { color: var(--text); text-decoration: underline; }
+.cl-commit-sha {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
 @media (max-width: 640px) {
   .cl-entry { grid-template-columns: 1fr; gap: 6px; }
+  .cl-commit-row { flex-wrap: wrap; }
+  .cl-commit-msg { white-space: normal; width: 100%; order: 3; }
 }
 
 /* Keyboard focus visibility */

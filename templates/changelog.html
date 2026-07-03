@@ -50,6 +50,7 @@
 <section class="legal">
   <div class="wrap">
     {% if entries %}
+    <p class="eyebrow">Highlights</p>
     <ol class="cl-list">
       {% for entry in entries %}
       <li class="cl-entry">
@@ -69,8 +70,27 @@
       </li>
       {% endfor %}
     </ol>
+    {% endif %}
+
+    <p class="eyebrow" style="margin-top: {{ '44px' if entries else '0' }};">Recent commits</p>
+    <p class="cl-commits-lead">Pulled automatically from GitHub — updates the moment new code is pushed, no manual editing needed.</p>
+    {% if commits %}
+    <ul class="cl-commit-list">
+      {% for commit in commits %}
+      <li class="cl-commit-row">
+        <span class="cl-commit-date">{{ commit.date | commit_date }}</span>
+        <span class="cl-commit-repo">{{ commit.repo }}</span>
+        {% if commit.url %}
+        <a class="cl-commit-msg" href="{{ commit.url }}" target="_blank" rel="noopener noreferrer">{{ commit.message }}</a>
+        {% else %}
+        <span class="cl-commit-msg">{{ commit.message }}</span>
+        {% endif %}
+        <span class="cl-commit-sha">{{ commit.sha }}</span>
+      </li>
+      {% endfor %}
+    </ul>
     {% else %}
-    <p class="legal-content">No changelog entries yet — check back soon.</p>
+    <p class="legal-content">No commit history available right now — check back soon.</p>
     {% endif %}
   </div>
 </section>
@@ -93,4 +113,4 @@
 
 <script src="/static/js/main.js"></script>
 </body>
-</html>
+</html> 

@@ -47,11 +47,20 @@ HIGHLIGHT_KEYS = ["🤖 AI", "🧠 Memory", "♟️ Games", "🎵 Music", "🪙 
 
 REQUEST_TIMEOUT = 5.0       # seconds — fail fast if the bot is slow/down
 CATEGORIES_CACHE_TTL = 300  # seconds — docs content barely changes, cache it
+STATS_CACHE_TTL = 8         # seconds — stats update every 15s on the client
+                             # poll anyway, so caching this short avoids a
+                             # live httpx round-trip to the bot on every
+                             # single page load/visitor without the numbers
+                             # ever looking stale to a human.
+LEADERBOARD_CACHE_TTL = 60  # seconds — mirrors the bot's own leaderboard
+                             # cache TTL (see web/app.py), no point polling
+                             # faster than the source refreshes.
 
 app = FastAPI(title="Jarvis Website", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.filters["md_bold"] = lambda s: re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s or "")
+templates.env.filters["md_code"] = lambda s: re.sub(r"`(.+?)`", r"<code>\1</code>", s or "")
 
 # Shown if the bot has never successfully responded yet (first deploy, etc.)
 _FALLBACK_STATS = {
@@ -74,6 +83,49 @@ _FALLBACK_STATS = {
 }
 
 _categories_cache: dict = {"data": {}, "bot_name": DEFAULT_BOT_NAME, "ts": 0.0}
+_stats_cache: dict = {"data": None, "ts": 0.0}
+_leaderboard_cache: dict = {"data": None, "ts": 0.0}
+
+
+def _load_changelog() -> list[dict]:
+    """Parse CHANGELOG.md into [{date, title, bullets}], newest first.
+
+    Format: '## YYYY-MM-DD — Title' headings followed by '- ' bullet
+    lines. Kept as a tiny hand-rolled parser rather than pulling in a
+    markdown dependency for four lines of syntax.
+    """
+    path = BASE_DIR / "CHANGELOG.md"
+    if not path.exists():
+        return []
+
+    entries: list[dict] = []
+    current: dict | None = None
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.rstrip()
+        stripped = line.strip()
+        if line.startswith("## "):
+            if current:
+                entries.append(current)
+            heading = line[3:].strip()
+            if "—" in heading:
+                date, title = heading.split("—", 1)
+            elif " - " in heading:
+                date, title = heading.split(" - ", 1)
+            else:
+                date, title = "", heading
+            current = {"date": date.strip(), "title": title.strip(), "bullets": []}
+        elif line.startswith("- ") and current is not None:
+            current["bullets"].append(line[2:].strip())
+        elif stripped and current is not None and current["bullets"]:
+            # Soft-wrapped continuation of the previous bullet line — join
+            # it back on rather than dropping it or treating as a new one.
+            current["bullets"][-1] = f"{current['bullets'][-1]} {stripped}"
+    if current:
+        entries.append(current)
+    return entries
+
+
+CHANGELOG_ENTRIES = _load_changelog()
 
 
 def _normalize_stats(raw_stats: dict) -> dict:
@@ -111,6 +163,44 @@ async def _fetch_json(path: str, timeout: float = REQUEST_TIMEOUT) -> dict | Non
             return res.json()
     except Exception:
         return None
+
+
+async def _get_stats() -> dict:
+    """Short-TTL cache in front of the bot's /api/stats.
+
+    Without this, every single visitor to '/', '/status', or a poll from
+    main.js triggers a live httpx call straight to the bot process. That's
+    fine at low traffic but doesn't scale — the cache here is short enough
+    (STATS_CACHE_TTL) that no human ever perceives stale data, while still
+    collapsing bursts of concurrent requests into one upstream call.
+    """
+    now = time.time()
+    if _stats_cache["data"] is not None and now - _stats_cache["ts"] < STATS_CACHE_TTL:
+        return _stats_cache["data"]
+
+    payload = await _fetch_json("/api/stats")
+    if payload is not None:
+        _stats_cache["data"] = payload
+        _stats_cache["ts"] = now
+        return payload
+
+    # Bot unreachable — serve the last good cached value if we have one,
+    # rather than falling all the way back to zeros.
+    return _stats_cache["data"] or {}
+
+
+async def _get_leaderboard() -> dict:
+    now = time.time()
+    if _leaderboard_cache["data"] is not None and now - _leaderboard_cache["ts"] < LEADERBOARD_CACHE_TTL:
+        return _leaderboard_cache["data"]
+
+    payload = await _fetch_json("/api/leaderboard")
+    if payload is not None:
+        _leaderboard_cache["data"] = payload
+        _leaderboard_cache["ts"] = now
+        return payload
+
+    return _leaderboard_cache["data"] or {"leaderboard": [], "currency_name": "Jarvis Credit", "currency_emoji": "🪙"}
 
 
 async def _get_categories() -> tuple[dict, str]:
@@ -163,7 +253,7 @@ async def about(request: Request):
 
 @app.get("/status")
 async def status_page(request: Request):
-    raw_stats = await _fetch_json("/api/stats") or {}
+    raw_stats = await _get_stats() or {}
     normalized = _normalize_stats(raw_stats)
     stats = {**_FALLBACK_STATS, **raw_stats, **normalized}
     _, bot_name = await _get_categories()
@@ -172,6 +262,46 @@ async def status_page(request: Request):
         {
             "request": request,
             "stats": stats,
+            "invite_url": INVITE_URL,
+            "support_server_url": SUPPORT_SERVER_URL,
+            "bot_name": bot_name,
+        },
+    )
+
+
+@app.get("/leaderboard")
+async def leaderboard(request: Request):
+    board = await _get_leaderboard()
+    _, bot_name = await _get_categories()
+    return templates.TemplateResponse(
+        "leaderboard.html",
+        {
+            "request": request,
+            "leaderboard": board.get("leaderboard", []),
+            "currency_name": board.get("currency_name", "Jarvis Credit"),
+            "currency_emoji": board.get("currency_emoji", "🪙"),
+            "invite_url": INVITE_URL,
+            "support_server_url": SUPPORT_SERVER_URL,
+            "bot_name": bot_name,
+        },
+    )
+
+
+@app.get("/api/leaderboard")
+async def api_leaderboard():
+    """Proxied + cached the same way /api/stats is — see _get_leaderboard()."""
+    data = await _get_leaderboard()
+    return JSONResponse(data)
+
+
+@app.get("/changelog")
+async def changelog(request: Request):
+    _, bot_name = await _get_categories()
+    return templates.TemplateResponse(
+        "changelog.html",
+        {
+            "request": request,
+            "entries": CHANGELOG_ENTRIES,
             "invite_url": INVITE_URL,
             "support_server_url": SUPPORT_SERVER_URL,
             "bot_name": bot_name,
@@ -228,7 +358,7 @@ async def api_stats():
     """Proxied straight through to the bot's API. The frontend JS keeps
     calling this same relative '/api/stats' path on the website's own
     domain — no CORS headaches, no hardcoded bot URL in client-side code."""
-    data = await _fetch_json("/api/stats")
+    data = await _get_stats()
     return JSONResponse(data or _FALLBACK_STATS)
 
 

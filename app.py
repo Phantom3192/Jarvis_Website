@@ -68,6 +68,12 @@ COMMITS_CACHE_TTL = 900  # seconds (15 min) — commits don't need to appear
                           # that a push shows up same-day without hammering
                           # GitHub's API on every visitor.
 
+# Only commits pushed AFTER this moment show up in the feed — everything
+# older (the backlog that was already sitting in the repos) stays hidden.
+# Override with CHANGELOG_CUTOFF ("YYYY-MM-DDTHH:MM:SSZ") to move the line;
+# left as-is, only new pushes from here on will ever appear.
+CHANGELOG_CUTOFF = os.getenv("CHANGELOG_CUTOFF", "2026-07-04T00:00:00Z")
+
 HIGHLIGHT_KEYS = ["🤖 AI", "🧠 Memory", "♟️ Games", "🎵 Music", "🪙 Jarvis Credits", "⏰ Reminders"]
 
 REQUEST_TIMEOUT = 5.0       # seconds — fail fast if the bot is slow/down
@@ -266,12 +272,14 @@ async def _fetch_repo_commits(client: httpx.AsyncClient, repo: str) -> list[dict
             message = commit["message"].split("\n", 1)[0].strip()
             if message.lower().startswith("merge "):
                 continue  # skip noisy merge commits
+            date = commit["author"]["date"]  # ISO 8601, e.g. 2026-07-01T12:34:56Z
+            if date <= CHANGELOG_CUTOFF:
+                continue  # older than the cutoff — part of the old backlog, skip it
             parsed.append({
                 "repo": repo_label,
                 "message": message,
                 "sha": c["sha"][:7],
-                "url": c.get("html_url", ""),
-                "date": commit["author"]["date"],  # ISO 8601, e.g. 2026-07-01T12:34:56Z
+                "date": date,
                 "author": commit["author"].get("name", ""),
             })
         except (KeyError, TypeError):

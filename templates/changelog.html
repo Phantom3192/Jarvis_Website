@@ -73,24 +73,31 @@
     {% endif %}
 
     <p class="eyebrow" style="margin-top: {{ '44px' if entries else '0' }};">Recent commits</p>
-    <p class="cl-commits-lead">Pulled automatically from GitHub — updates the moment new code is pushed, no manual editing needed.</p>
     {% if commits %}
-    <ul class="cl-commit-list">
-      {% for commit in commits %}
-      <li class="cl-commit-row">
-        <span class="cl-commit-date">{{ commit.date | commit_date }}</span>
-        <span class="cl-commit-repo">{{ commit.repo }}</span>
-        {% if commit.url %}
-        <a class="cl-commit-msg" href="{{ commit.url }}" target="_blank" rel="noopener noreferrer">{{ commit.message }}</a>
-        {% else %}
-        <span class="cl-commit-msg">{{ commit.message }}</span>
-        {% endif %}
-        <span class="cl-commit-sha">{{ commit.sha }}</span>
-      </li>
-      {% endfor %}
-    </ul>
+    <div class="cl-table-wrap">
+      <table class="cl-table">
+        <thead>
+          <tr>
+            <th class="cl-th-date">Date</th>
+            <th class="cl-th-repo">Repo</th>
+            <th class="cl-th-msg">Change</th>
+            <th class="cl-th-sha">Commit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for commit in commits %}
+          <tr class="cl-tr">
+            <td class="cl-td-date">{{ commit.date | commit_date }}</td>
+            <td class="cl-td-repo"><span class="cl-commit-repo">{{ commit.repo }}</span></td>
+            <td class="cl-td-msg">{{ commit.message }}</td>
+            <td class="cl-td-sha">{{ commit.sha }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
     {% else %}
-    <p class="legal-content">No commit history available right now — check back soon.</p>
+    <p class="legal-content">Nothing pushed yet — new changes will show up here as soon as they land.</p>
     {% endif %}
   </div>
 </section>
@@ -113,4 +120,4 @@
 
 <script src="/static/js/main.js"></script>
 </body>
-</html> 
+</html>

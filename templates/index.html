@@ -58,7 +58,7 @@
       <p class="lede">Chat, remember, play, and run on Jarvis Credits — one bot that handles AI conversation, games, music, and moderation so your server doesn't need five different bots.</p>
       <div class="hero-ctas">
         <a class="btn btn-primary" href="{{ invite_url }}">+ Add to Discord</a>
-        <a class="btn btn-ghost" href="#docs">View commands</a>
+        <a class="btn btn-ghost" href="/guide#docs">View commands</a>
       </div>
     </div>
 
@@ -137,7 +137,7 @@
     <div class="section-head">
       <p class="eyebrow">Capabilities</p>
       <h2>One bot, the full set.</h2>
-      <p>A sample of what {{ bot_name }} runs — the full command reference is below.</p>
+      <p>A sample of what {{ bot_name }} runs — see the <a href="/guide#docs">full command reference</a> in the guide.</p>
     </div>
     <div class="grid">
       {% for cat, data in highlights.items() %}
@@ -151,51 +151,6 @@
   </div>
 </section>
 
-<section id="docs">
-  <div class="wrap">
-    <div class="section-head">
-      <p class="eyebrow">Command reference</p>
-      <h2>Everything {{ bot_name }} can do.</h2>
-      <p>Both <code>!prefix</code> and <code>/slash</code> versions are supported for most commands.</p>
-    </div>
-
-    <div class="docs-layout">
-      <nav class="docs-nav">
-        {% for cat, data in categories.items() %}
-        <a class="docs-nav-item" href="#cat-{{ loop.index }}" data-idx="{{ loop.index }}">{{ cat }}</a>
-        {% endfor %}
-      </nav>
-
-      <div class="docs-content">
-        {% for cat, data in categories.items() %}
-        <div class="docs-cat" id="cat-{{ loop.index }}">
-          <div class="docs-cat-head">
-            <div>
-              <h3>{{ cat }}</h3>
-              <p>{{ data.description }}</p>
-            </div>
-          </div>
-          <table class="docs-cmd-table">
-            {% for cmd, desc in data.commands %}
-              {% if cmd == "" and desc == "" %}
-              <tr class="spacer"><td colspan="2"></td></tr>
-              {% elif desc.startswith('━') %}
-              <tr class="divider"><td colspan="2">{{ cmd | md_bold | safe }}</td></tr>
-              {% else %}
-              <tr>
-                <td>{{ cmd }}</td>
-                <td>{{ desc | md_bold | safe }}</td>
-              </tr>
-              {% endif %}
-            {% endfor %}
-          </table>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-</section>
-
 <footer>
   <div class="wrap">
     <div class="footer-brand">{{ bot_name }} — system console</div>
@@ -205,7 +160,7 @@
       <a href="/leaderboard">Leaderboard</a>
       <a href="/vote">Vote</a>
       <a href="/changelog">Changelog</a>
-      <a href="#docs">Commands</a>
+      <a href="/guide#docs">Commands</a>
       <a href="/guide">Guide</a>
       <a href="/about">About the Developer</a>
       <a href="/privacy">Privacy Policy</a>

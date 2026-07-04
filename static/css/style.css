@@ -791,6 +791,13 @@ footer .wrap {
   .hero {
     background-image: linear-gradient(180deg, rgba(9,12,16,0.92) 0%, rgba(9,12,16,0.85) 45%, var(--bg) 100%);
   }
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .core {
+    margin: 0 auto;
+  }
   .status-hero-grid-inline, .status-metric-grid { grid-template-columns: 1fr; }
   .status-card { padding: 22px; }
 }

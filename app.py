@@ -20,6 +20,7 @@ import asyncio
 import os
 import re
 import time
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -99,7 +100,25 @@ LEADERBOARD_CACHE_TTL = 60  # seconds — mirrors the bot's own leaderboard
                              # cache TTL (see web/app.py), no point polling
                              # faster than the source refreshes.
 
-app = FastAPI(title="Jarvis Website", docs_url=None, redoc_url=None)
+# A single reused httpx.AsyncClient instead of creating a new one (and
+# paying a fresh TCP+TLS handshake) on every single upstream call. Created
+# once at startup and closed on shutdown via the lifespan below; every
+# helper that talks to the bot's API or GitHub reuses this same client and
+# its connection pool.
+http_client: httpx.AsyncClient | None = None
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    global http_client
+    http_client = httpx.AsyncClient(timeout=REQUEST_TIMEOUT)
+    try:
+        yield
+    finally:
+        await http_client.aclose()
+
+
+app = FastAPI(title="Jarvis Website", docs_url=None, redoc_url=None, lifespan=lifespan)
 # Railway (like most PaaS) terminates TLS at its edge and forwards plain
 # HTTP internally, tagging the original scheme in X-Forwarded-Proto. Without
 # this, request.url.scheme (and therefore url_for(...) / request.url used
@@ -219,10 +238,9 @@ async def _fetch_json(path: str, timeout: float = REQUEST_TIMEOUT) -> dict | Non
     if not BOT_API_URL:
         return None
     try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            res = await client.get(f"{BOT_API_URL}{path}")
-            res.raise_for_status()
-            return res.json()
+        res = await http_client.get(f"{BOT_API_URL}{path}", timeout=timeout)
+        res.raise_for_status()
+        return res.json()
     except Exception:
         return None
 
@@ -312,10 +330,9 @@ async def _get_recent_commits() -> list[dict]:
     if _commits_cache["data"] and now - _commits_cache["ts"] < COMMITS_CACHE_TTL:
         return _commits_cache["data"]
 
-    async with httpx.AsyncClient() as client:
-        results = await asyncio.gather(
-            *(_fetch_repo_commits(client, repo) for repo in CHANGELOG_REPOS)
-        )
+    results = await asyncio.gather(
+        *(_fetch_repo_commits(http_client, repo) for repo in CHANGELOG_REPOS)
+    )
 
     merged = [commit for repo_commits in results for commit in repo_commits]
     if not merged:

@@ -28,6 +28,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 BASE_DIR = Path(__file__).parent
 
@@ -95,6 +96,13 @@ LEADERBOARD_CACHE_TTL = 60  # seconds — mirrors the bot's own leaderboard
                              # faster than the source refreshes.
 
 app = FastAPI(title="Jarvis Website", docs_url=None, redoc_url=None)
+# Railway (like most PaaS) terminates TLS at its edge and forwards plain
+# HTTP internally, tagging the original scheme in X-Forwarded-Proto. Without
+# this, request.url.scheme (and therefore url_for(...) / request.url used
+# for og:image and og:url in <head>) would render as "http://" even on the
+# live https site — which is exactly what makes Discord/Slack/etc. link
+# embeds fail to show a preview image.
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 templates.env.filters["md_bold"] = lambda s: re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s or "")

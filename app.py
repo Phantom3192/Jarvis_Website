@@ -17,6 +17,8 @@ If the bot is unreachable (deploying, crashed, restarting), the site
 still renders fine using cached/fallback data instead of failing.
 """
 import asyncio
+import hashlib
+import hmac
 import os
 import re
 import time
@@ -71,6 +73,15 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")  # optional — raises the API rate
                                                 # limit from 60/hr to 5000/hr.
                                                 # Not required for a couple of
                                                 # low-traffic public repos.
+
+# Optional but recommended: set this to the same secret you configure on the
+# GitHub webhook (Settings -> Webhooks) for Jarvis-4.0 and/or Jarvis_Website.
+# When set, POST /webhook/github lets GitHub push new commits to the site
+# the instant you push, instead of waiting up to COMMITS_CACHE_TTL for the
+# next natural refresh (and instead of needing a manual restart). If left
+# blank, the webhook route still works but accepts unsigned requests — fine
+# for a private/low-stakes deploy, not recommended if the URL could leak.
+GITHUB_WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET", "")
 COMMITS_PER_REPO = 15
 COMMITS_CACHE_TTL = 900  # seconds (15 min) — commits don't need to appear
                           # instantly; this just needs to be short enough
@@ -324,26 +335,53 @@ async def _fetch_repo_commits(client: httpx.AsyncClient, repo: str) -> list[dict
     return parsed
 
 
-async def _get_recent_commits() -> list[dict]:
-    """Cached, merged, newest-first commit feed across CHANGELOG_REPOS."""
-    now = time.time()
-    if _commits_cache["data"] and now - _commits_cache["ts"] < COMMITS_CACHE_TTL:
-        return _commits_cache["data"]
+async def _refresh_commits_cache() -> list[dict]:
+    """Actually hit the GitHub API and repopulate _commits_cache.
 
+    Split out from _get_recent_commits() so the webhook handler can force
+    an immediate refresh (bypassing the TTL check) without duplicating the
+    fetch/merge/sort logic.
+    """
     results = await asyncio.gather(
         *(_fetch_repo_commits(http_client, repo) for repo in CHANGELOG_REPOS)
     )
 
     merged = [commit for repo_commits in results for commit in repo_commits]
     if not merged:
-        # GitHub unreachable/rate-limited — serve stale cache rather than a
-        # blank page.
+        # GitHub unreachable/rate-limited — keep serving the stale cache
+        # rather than blanking it out, but don't bump the timestamp so the
+        # next request tries again instead of waiting a full TTL.
         return _commits_cache["data"]
 
     merged.sort(key=lambda c: c["date"], reverse=True)
     _commits_cache["data"] = merged
-    _commits_cache["ts"] = now
+    _commits_cache["ts"] = time.time()
     return merged
+
+
+async def _get_recent_commits() -> list[dict]:
+    """Cached, merged, newest-first commit feed across CHANGELOG_REPOS.
+
+    Normally refreshed lazily whenever the TTL lapses. The GitHub webhook
+    (/webhook/github) can also invalidate this early so a push shows up
+    immediately instead of waiting up to COMMITS_CACHE_TTL.
+    """
+    now = time.time()
+    if _commits_cache["data"] and now - _commits_cache["ts"] < COMMITS_CACHE_TTL:
+        return _commits_cache["data"]
+
+    return await _refresh_commits_cache()
+
+
+def _verify_github_signature(secret: str, payload: bytes, signature_header: str) -> bool:
+    """Validate GitHub's X-Hub-Signature-256 header (HMAC-SHA256 of the raw
+    request body, keyed with the webhook secret) using a constant-time
+    comparison so this can't be timing-attacked."""
+    if not signature_header or not signature_header.startswith("sha256="):
+        return False
+    expected = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    provided = signature_header.removeprefix("sha256=")
+    return hmac.compare_digest(expected, provided)
 
 
 async def _get_categories() -> tuple[dict, str]:
@@ -507,6 +545,42 @@ async def changelog(request: Request):
 async def api_changelog():
     """JSON feed of the same auto-pulled commit history shown on /changelog."""
     return JSONResponse({"commits": await _get_recent_commits()})
+
+
+@app.post("/webhook/github")
+async def github_webhook(request: Request):
+    """GitHub calls this the moment someone pushes to Jarvis-4.0 or
+    Jarvis_Website (once configured as a webhook on those repos — see
+    README/comments near GITHUB_WEBHOOK_SECRET above).
+
+    This is what makes the changelog "just update" instead of needing a
+    restart: on every push event we drop the in-memory commit cache and
+    refetch right away, so the very next page load (yours or anyone
+    else's) already has the new commit — no waiting for COMMITS_CACHE_TTL
+    to lapse and no redeploy needed.
+    """
+    body = await request.body()
+
+    if GITHUB_WEBHOOK_SECRET:
+        signature = request.headers.get("x-hub-signature-256", "")
+        if not _verify_github_signature(GITHUB_WEBHOOK_SECRET, body, signature):
+            return JSONResponse({"error": "invalid signature"}, status_code=401)
+
+    event = request.headers.get("x-github-event", "")
+
+    if event == "push":
+        global CHANGELOG_ENTRIES
+        # Re-read CHANGELOG.md too, in case it exists and was just edited —
+        # today it's not present so this is a no-op, but it means adding
+        # one later doesn't reintroduce a "needs a restart" gap.
+        CHANGELOG_ENTRIES = _load_changelog()
+        await _refresh_commits_cache()
+        return JSONResponse({"ok": True, "refreshed": True})
+
+    # "ping" (sent automatically when the webhook is first created) and any
+    # other event types are just acknowledged so GitHub doesn't flag the
+    # webhook as failing.
+    return JSONResponse({"ok": True, "refreshed": False})
 
 
 @app.get("/guide")

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Changelog — {{ bot_name }}</title>
-<meta name="description" content="What's new with {{ bot_name }} — recent updates and improvements.">
+<title>Vote for {{ bot_name }} — top.gg</title>
+<meta name="description" content="Vote for {{ bot_name }} on top.gg. It takes a few seconds and helps more servers discover the bot.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -27,7 +27,7 @@
       <a href="/vote">Vote</a>
       <a href="/changelog">Changelog</a>
       <a href="/guide">Guide</a>
-      <a href="/about">About</a>
+      <a href="/about">About the Developer</a>
     </div>
     <div class="nav-ctas">
       <a class="nav-cta nav-cta-ghost" href="{{ support_server_url }}">Official Server</a>
@@ -42,65 +42,55 @@
 
 <header class="legal-hero">
   <div class="wrap">
-    <p class="eyebrow">Under active development</p>
-    <h1>Changelog</h1>
-    <p class="legal-updated">What's new with {{ bot_name }} — newest first.</p>
+    <p class="eyebrow">Support the project</p>
+    <h1>Vote for {{ bot_name }} on top.gg</h1>
   </div>
 </header>
 
-<section class="legal">
-  <div class="wrap">
-    {% if entries %}
-    <p class="eyebrow">Highlights</p>
-    <ol class="cl-list">
-      {% for entry in entries %}
-      <li class="cl-entry">
-        <div class="cl-entry-meta">
-          <span class="cl-date">{{ entry.date }}</span>
-        </div>
-        <div class="cl-entry-body">
-          <h2>{{ entry.title }}</h2>
-          {% if entry.bullets %}
-          <ul>
-            {% for bullet in entry.bullets %}
-            <li>{{ bullet | md_code | safe }}</li>
-            {% endfor %}
-          </ul>
-          {% endif %}
-        </div>
-      </li>
-      {% endfor %}
-    </ol>
-    {% endif %}
-
-    <p class="eyebrow" style="margin-top: {{ '44px' if entries else '0' }};">Recent commits</p>
-    {% if commits %}
-    <div class="cl-table-wrap">
-      <table class="cl-table">
-        <thead>
-          <tr>
-            <th class="cl-th-date">Date</th>
-            <th class="cl-th-repo">Repo</th>
-            <th class="cl-th-msg">Change</th>
-            <th class="cl-th-sha">Commit</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for commit in commits %}
-          <tr class="cl-tr">
-            <td class="cl-td-date">{{ commit.date | commit_date }}</td>
-            <td class="cl-td-repo"><span class="cl-commit-repo">{{ commit.repo }}</span></td>
-            <td class="cl-td-msg">{{ commit.message }}</td>
-            <td class="cl-td-sha">{{ commit.sha }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+<section class="dev-section">
+  <div class="wrap dev-card">
+    <div class="dev-info" style="max-width: 100%;">
+      <p class="eyebrow">Takes about 5 seconds</p>
+      <h2>Every vote helps {{ bot_name }} reach more servers.</h2>
+      <p class="dev-bio">
+        top.gg rankings are one of the main ways people discover new Discord bots.
+        Voting costs nothing, doesn't require an account beyond Discord login, and
+        directly helps {{ bot_name }} climb the listing so more servers find it.
+      </p>
+      <div class="dev-links">
+        <a class="btn btn-primary" href="/vote/go" target="_blank" rel="noopener noreferrer">
+          🗳️ Vote Now on top.gg
+        </a>
+        <a class="btn btn-ghost" href="{{ support_server_url }}">Join the Official Server</a>
+      </div>
     </div>
-    {% else %}
-    <p class="legal-content">Nothing pushed yet — new changes will show up here as soon as they land.</p>
-    {% endif %}
   </div>
+
+  <div class="wrap" style="margin-top: 40px;">
+    <div class="grid">
+      <div class="card">
+        <span class="card-icon">⏱️</span>
+        <h3>Only takes a few seconds</h3>
+        <p>Log in with Discord on top.gg, click vote, and you're done. No extra sign-up.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🔁</span>
+        <h3>Vote again every 12 hours</h3>
+        <p>top.gg resets your vote cooldown twice a day, so you can support {{ bot_name }} again soon after.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">📈</span>
+        <h3>Helps the bot grow</h3>
+        <p>More votes means better visibility on top.gg — which means more servers get to use {{ bot_name }}.</p>
+      </div>
+    </div>
+  </div>
+
+  {% if not topgg_configured %}
+  <div class="wrap dev-extra">
+    <p>Heads up — the top.gg listing link isn't configured yet, so the button above will show a "temporarily unavailable" notice for now. Check back soon, or hop into the <a href="{{ support_server_url }}">official server</a> for updates.</p>
+  </div>
+  {% endif %}
 </section>
 
 <footer>
@@ -113,7 +103,7 @@
       <a href="/vote">Vote</a>
       <a href="/changelog">Changelog</a>
       <a href="/guide">Guide</a>
-      <a href="/about">About</a>
+      <a href="/about">About the Developer</a>
       <a href="/privacy">Privacy Policy</a>
       <a href="/terms">Terms of Service</a>
     </div>

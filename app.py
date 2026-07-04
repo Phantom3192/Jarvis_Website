@@ -25,7 +25,7 @@ from pathlib import Path
 
 import httpx
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -44,6 +44,13 @@ INVITE_URL = (
 )
 SUPPORT_SERVER_URL = os.getenv("SUPPORT_SERVER_URL", "#")  # e.g. https://discord.gg/your-invite-code
 LEGAL_LAST_UPDATED = os.getenv("LEGAL_LAST_UPDATED", "July 1, 2026")
+
+# top.gg voting — set TOPGG_URL once the bot is listed (e.g.
+# https://top.gg/bot/<client_id>/vote). Until then it's left blank on
+# purpose: /vote still renders normally, but the "Vote Now" button routes
+# through /vote/go, which shows a "temporarily unavailable" page instead
+# of sending people to a listing that doesn't exist yet.
+TOPGG_URL = os.getenv("TOPGG_URL", "").strip()
 
 # ── Auto-updating changelog ─────────────────────────────────────────────────
 # Rather than requiring a manual CHANGELOG.md edit for every change, the
@@ -399,6 +406,45 @@ async def api_leaderboard():
     """Proxied + cached the same way /api/stats is — see _get_leaderboard()."""
     data = await _get_leaderboard()
     return JSONResponse(data)
+
+
+@app.get("/vote")
+async def vote(request: Request):
+    _, bot_name = await _get_categories()
+    return templates.TemplateResponse(
+        "vote.html",
+        {
+            "request": request,
+            "invite_url": INVITE_URL,
+            "support_server_url": SUPPORT_SERVER_URL,
+            "bot_name": bot_name,
+            "topgg_configured": bool(TOPGG_URL),
+        },
+    )
+
+
+@app.get("/vote/go")
+async def vote_go(request: Request):
+    """Single choke point the 'Vote Now' button posts through.
+
+    Configured -> bounce straight to the real top.gg listing.
+    Not configured -> render the "temporarily unavailable" page instead
+    of 404ing or sending people to a dead '#' link.
+    """
+    if TOPGG_URL:
+        return RedirectResponse(TOPGG_URL, status_code=302)
+
+    _, bot_name = await _get_categories()
+    return templates.TemplateResponse(
+        "vote_unavailable.html",
+        {
+            "request": request,
+            "invite_url": INVITE_URL,
+            "support_server_url": SUPPORT_SERVER_URL,
+            "bot_name": bot_name,
+        },
+        status_code=503,
+    )
 
 
 @app.get("/changelog")

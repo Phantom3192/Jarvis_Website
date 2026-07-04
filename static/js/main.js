@@ -35,8 +35,33 @@ async function refreshStats() {
   }
 }
 
-refreshStats();
-setInterval(refreshStats, REFRESH_MS);
+let statsInterval = null;
+
+function startStatsPolling() {
+  if (statsInterval) return; // already running
+  refreshStats();
+  statsInterval = setInterval(refreshStats, REFRESH_MS);
+}
+
+function stopStatsPolling() {
+  if (!statsInterval) return;
+  clearInterval(statsInterval);
+  statsInterval = null;
+}
+
+// Pause polling while the tab is hidden/backgrounded — no point hammering
+// the bot's API every 15s for a tab nobody is looking at. Resumes (with an
+// immediate refresh so the numbers aren't stale) the moment it's visible
+// again.
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    stopStatsPolling();
+  } else {
+    startStatsPolling();
+  }
+});
+
+startStatsPolling();
 
 // ── Mobile nav menu ─────────────────────────────────────────────────────
 const navToggle = document.getElementById("navToggle");

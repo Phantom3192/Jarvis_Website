@@ -929,6 +929,7 @@ code {
 .cl-entry-body ul li { margin-bottom: 6px; }
 
 .cl-commits-lead { color: var(--text-faint); font-size: 13.5px; margin: 6px 0 24px; }
+.cl-view-more { margin: 16px 0 0; font-size: 13.5px !important; }
 
 .cl-table-wrap {
   max-width: 92ch;

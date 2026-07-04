@@ -75,6 +75,10 @@ COMMITS_CACHE_TTL = 900  # seconds (15 min) — commits don't need to appear
                           # instantly; this just needs to be short enough
                           # that a push shows up same-day without hammering
                           # GitHub's API on every visitor.
+CHANGELOG_DISPLAY_LIMIT = 20  # cap how many merged commits render on the
+                                # page itself — the full history is still
+                                # one click away on GitHub via the links
+                                # rendered under the table.
 
 # Only commits pushed AFTER this moment show up in the feed — everything
 # older (the backlog that was already sitting in the repos) stays hidden.
@@ -459,12 +463,22 @@ async def vote_go(request: Request):
 async def changelog(request: Request):
     _, bot_name = await _get_categories()
     commits = await _get_recent_commits()
+    # The merged feed can grow past what's worth rendering inline (two repos
+    # x COMMITS_PER_REPO each) — cap what's shown on the page and point
+    # people at the real commit history on GitHub for anything older.
+    displayed_commits = commits[:CHANGELOG_DISPLAY_LIMIT]
+    repo_links = [
+        {"label": repo.split("/")[-1], "url": f"https://github.com/{repo}/commits"}
+        for repo in CHANGELOG_REPOS
+    ]
     return templates.TemplateResponse(
         "changelog.html",
         {
             "request": request,
             "entries": CHANGELOG_ENTRIES,
-            "commits": commits,
+            "commits": displayed_commits,
+            "has_more_commits": len(commits) > len(displayed_commits),
+            "repo_links": repo_links,
             "invite_url": INVITE_URL,
             "support_server_url": SUPPORT_SERVER_URL,
             "bot_name": bot_name,

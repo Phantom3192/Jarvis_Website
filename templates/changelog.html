@@ -108,6 +108,15 @@
         </tbody>
       </table>
     </div>
+    {% if has_more_commits %}
+    <p class="legal-content cl-view-more">
+      Showing the {{ commits | length }} most recent changes.
+      View full commit history on GitHub:
+      {% for link in repo_links %}
+      <a href="{{ link.url }}" target="_blank" rel="noopener">{{ link.label }}</a>{% if not loop.last %}, {% endif %}
+      {% endfor %}
+    </p>
+    {% endif %}
     {% else %}
     <p class="legal-content">Nothing pushed yet — new changes will show up here as soon as they land.</p>
     {% endif %}

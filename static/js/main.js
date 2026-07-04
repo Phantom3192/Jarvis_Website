@@ -1,6 +1,6 @@
 // Jarvis site — live stats polling + docs scrollspy.
 
-const REFRESH_MS = 15000;
+const REFRESH_MS = 3000;
 
 function fmtNumber(n) {
   if (n === null || n === undefined) return "—";
@@ -20,14 +20,20 @@ async function refreshStats() {
     const coreDot = document.querySelector(".core-readout .status-dot");
     if (coreDot) coreDot.classList.toggle("offline", !data.online);
 
-    document.getElementById("t-status").textContent = data.online ? "Online" : "Reconnecting";
-    document.getElementById("t-guilds").textContent = fmtNumber(data.guilds);
-    document.getElementById("t-users").textContent = fmtNumber(data.users);
-    document.getElementById("t-uptime").textContent = data.uptime_human || "—";
-    document.getElementById("t-latency").textContent =
-      data.latency_ms !== null && data.latency_ms !== undefined ? `${data.latency_ms} ms` : "—";
+    const tStatus = document.getElementById("t-status");
+    if (tStatus) tStatus.textContent = data.online ? "Online" : "Reconnecting";
+    document.getElementById("t-guilds")?.replaceChildren(fmtNumber(data.guilds));
+    document.getElementById("t-users")?.replaceChildren(fmtNumber(data.users));
+    const tUptime = document.getElementById("t-uptime");
+    if (tUptime) tUptime.textContent = data.uptime_human || "—";
+    const tLatency = document.getElementById("t-latency");
+    if (tLatency) {
+      tLatency.textContent =
+        data.latency_ms !== null && data.latency_ms !== undefined ? `${data.latency_ms} ms` : "—";
+    }
   } catch (err) {
-    document.getElementById("t-status").textContent = "Unreachable";
+    const tStatus = document.getElementById("t-status");
+    if (tStatus) tStatus.textContent = "Unreachable";
     const coreLabel = document.getElementById("core-online-label");
     if (coreLabel) coreLabel.textContent = "Unreachable";
     const coreDot = document.querySelector(".core-readout .status-dot");

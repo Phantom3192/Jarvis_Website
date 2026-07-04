@@ -101,15 +101,19 @@ CHANGELOG_CUTOFF = os.getenv("CHANGELOG_CUTOFF", "2026-07-04T00:00:00Z")
 HIGHLIGHT_KEYS = ["🤖 AI", "🧠 Memory", "♟️ Games", "🎵 Music", "🪙 Jarvis Credits", "⏰ Reminders"]
 
 REQUEST_TIMEOUT = 5.0       # seconds — fail fast if the bot is slow/down
-CATEGORIES_CACHE_TTL = 300  # seconds — docs content barely changes, cache it
-STATS_CACHE_TTL = 8         # seconds — stats update every 15s on the client
-                             # poll anyway, so caching this short avoids a
-                             # live httpx round-trip to the bot on every
-                             # single page load/visitor without the numbers
-                             # ever looking stale to a human.
-LEADERBOARD_CACHE_TTL = 60  # seconds — mirrors the bot's own leaderboard
-                             # cache TTL (see web/app.py), no point polling
-                             # faster than the source refreshes.
+
+# ── Background refresh intervals ────────────────────────────────────────────
+# All three of these (stats, categories, leaderboard) are pulled by a fixed-
+# schedule background task started at app startup (see lifespan below), NOT
+# fetched live on a visitor's request. A request handler only ever reads
+# whatever is already sitting in memory. This means traffic volume has zero
+# effect on how often the bot's API gets hit — one visitor or ten thousand,
+# the bot sees exactly one call per interval, per route.
+STATS_REFRESH_SECS = 2          # matches the bot's own sampling cadence —
+                                 # no point polling faster than the source
+                                 # actually updates
+CATEGORIES_REFRESH_SECS = 300  # docs content barely changes
+LEADERBOARD_REFRESH_SECS = 60  # mirrors the bot's own leaderboard cadence
 
 # A single reused httpx.AsyncClient instead of creating a new one (and
 # paying a fresh TCP+TLS handshake) on every single upstream call. Created
@@ -119,13 +123,37 @@ LEADERBOARD_CACHE_TTL = 60  # seconds — mirrors the bot's own leaderboard
 http_client: httpx.AsyncClient | None = None
 
 
+_background_tasks: list[asyncio.Task] = []
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     global http_client
     http_client = httpx.AsyncClient(timeout=REQUEST_TIMEOUT)
+
+    # Pull everything once, right now, before we start serving requests —
+    # so the very first visitor after a deploy/restart already sees real
+    # data instead of the empty/fallback state for a few seconds.
+    await asyncio.gather(
+        _refresh_stats_once(),
+        _refresh_categories_once(),
+        _refresh_leaderboard_once(),
+    )
+
+    # Then hand off to the three background loops, which keep re-pulling
+    # on their own fixed schedules for the rest of the process's life —
+    # completely independent of how many people are visiting the site.
+    _background_tasks.extend([
+        asyncio.create_task(_refresh_stats_loop()),
+        asyncio.create_task(_refresh_categories_loop()),
+        asyncio.create_task(_refresh_leaderboard_loop()),
+    ])
+
     try:
         yield
     finally:
+        for task in _background_tasks:
+            task.cancel()
         await http_client.aclose()
 
 
@@ -159,6 +187,7 @@ _FALLBACK_STATS = {
     "users": 0,
     "uptime_human": "—",
     "latency_ms": None,
+    "api_latency_ms": None,
     "online": False,
     "bot_name": DEFAULT_BOT_NAME,
     "cpu_percent": None,
@@ -257,41 +286,50 @@ async def _fetch_json(path: str, timeout: float = REQUEST_TIMEOUT) -> dict | Non
 
 
 async def _get_stats() -> dict:
-    """Short-TTL cache in front of the bot's /api/stats.
+    """Pure in-memory read — never makes a network call.
 
-    Without this, every single visitor to '/', '/status', or a poll from
-    main.js triggers a live httpx call straight to the bot process. That's
-    fine at low traffic but doesn't scale — the cache here is short enough
-    (STATS_CACHE_TTL) that no human ever perceives stale data, while still
-    collapsing bursts of concurrent requests into one upstream call.
+    Populated by _refresh_stats_loop() on a fixed background schedule (see
+    lifespan below). Route handlers and main.js polls just read whatever
+    is already cached; visitor traffic never triggers a live call to the
+    bot, so 1 visitor and 10,000 visitors put the exact same load on it.
     """
-    now = time.time()
-    if _stats_cache["data"] is not None and now - _stats_cache["ts"] < STATS_CACHE_TTL:
-        return _stats_cache["data"]
-
-    payload = await _fetch_json("/api/stats")
-    if payload is not None:
-        _stats_cache["data"] = payload
-        _stats_cache["ts"] = now
-        return payload
-
-    # Bot unreachable — serve the last good cached value if we have one,
-    # rather than falling all the way back to zeros.
     return _stats_cache["data"] or {}
 
 
-async def _get_leaderboard() -> dict:
-    now = time.time()
-    if _leaderboard_cache["data"] is not None and now - _leaderboard_cache["ts"] < LEADERBOARD_CACHE_TTL:
-        return _leaderboard_cache["data"]
+async def _refresh_stats_once() -> None:
+    """One pull of /api/stats into the cache. A failed pull just leaves
+    the last good snapshot in place — it never blanks the cache out or
+    falls back to zeros while the bot is only briefly unreachable
+    (deploy, restart, blip)."""
+    payload = await _fetch_json("/api/stats")
+    if payload is not None:
+        _stats_cache["data"] = payload
+        _stats_cache["ts"] = time.time()
 
+
+async def _refresh_stats_loop() -> None:
+    """Runs for the life of the process, independent of request traffic."""
+    while True:
+        await asyncio.sleep(STATS_REFRESH_SECS)
+        await _refresh_stats_once()
+
+
+async def _get_leaderboard() -> dict:
+    """Pure in-memory read — see _get_stats() above for why."""
+    return _leaderboard_cache["data"] or {"leaderboard": [], "currency_name": "Jarvis Credit", "currency_emoji": "🪙"}
+
+
+async def _refresh_leaderboard_once() -> None:
     payload = await _fetch_json("/api/leaderboard")
     if payload is not None:
         _leaderboard_cache["data"] = payload
-        _leaderboard_cache["ts"] = now
-        return payload
+        _leaderboard_cache["ts"] = time.time()
 
-    return _leaderboard_cache["data"] or {"leaderboard": [], "currency_name": "Jarvis Credit", "currency_emoji": "🪙"}
+
+async def _refresh_leaderboard_loop() -> None:
+    while True:
+        await asyncio.sleep(LEADERBOARD_REFRESH_SECS)
+        await _refresh_leaderboard_once()
 
 
 async def _fetch_repo_commits(client: httpx.AsyncClient, repo: str) -> list[dict]:
@@ -385,20 +423,22 @@ def _verify_github_signature(secret: str, payload: bytes, signature_header: str)
 
 
 async def _get_categories() -> tuple[dict, str]:
-    """Categories barely change, so cache them and only refetch every
-    CATEGORIES_CACHE_TTL seconds — keeps page loads fast and avoids
-    hammering the bot's API on every visitor."""
-    now = time.time()
-    if _categories_cache["data"] and now - _categories_cache["ts"] < CATEGORIES_CACHE_TTL:
-        return _categories_cache["data"], _categories_cache["bot_name"]
+    """Pure in-memory read — see _get_stats() above for why."""
+    return _categories_cache["data"], _categories_cache["bot_name"]
 
+
+async def _refresh_categories_once() -> None:
     payload = await _fetch_json("/api/categories")
     if payload and payload.get("categories"):
         _categories_cache["data"] = payload["categories"]
         _categories_cache["bot_name"] = payload.get("bot_name", DEFAULT_BOT_NAME)
-        _categories_cache["ts"] = now
+        _categories_cache["ts"] = time.time()
 
-    return _categories_cache["data"], _categories_cache["bot_name"]
+
+async def _refresh_categories_loop() -> None:
+    while True:
+        await asyncio.sleep(CATEGORIES_REFRESH_SECS)
+        await _refresh_categories_once()
 
 
 @app.get("/")

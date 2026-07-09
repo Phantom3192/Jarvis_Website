@@ -19,11 +19,12 @@ still renders fine using cached/fallback data instead of failing.
 import asyncio
 import hashlib
 import hmac
+import json
 import os
 import re
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
@@ -97,6 +98,21 @@ CHANGELOG_DISPLAY_LIMIT = 20  # cap how many merged commits render on the
 # Override with CHANGELOG_CUTOFF ("YYYY-MM-DDTHH:MM:SSZ") to move the line;
 # left as-is, only new pushes from here on will ever appear.
 CHANGELOG_CUTOFF = os.getenv("CHANGELOG_CUTOFF", "2026-07-04T00:00:00Z")
+
+# ── Publish gate ─────────────────────────────────────────────────────────
+# Bot-side kill switch: Jarvis-4.0 has a `publish_config.json` at its repo
+# root with {"publish": false}. While publish is false, any commits pushed
+# after the last publish stay hidden from the site — you can land a whole
+# batch of WIP commits for a big update without it leaking early. Flip
+# "publish" to true and push -> the whole pending batch appears at once.
+# Flip it back to false afterwards to start hiding the next batch again.
+PUBLISH_CONFIG_REPO = os.getenv("PUBLISH_CONFIG_REPO", "Phantom3192/Jarvis-4.0")
+PUBLISH_CONFIG_BRANCH = os.getenv("PUBLISH_CONFIG_BRANCH", "main")
+PUBLISH_CONFIG_PATH = os.getenv("PUBLISH_CONFIG_PATH", "publish_config.json")
+# Where the "last time publish was true" timestamp is remembered across
+# restarts, so toggling publish back to false freezes the cutoff instead
+# of resetting it.
+PUBLISH_STATE_FILE = BASE_DIR / ".changelog_publish_state.json"
 
 HIGHLIGHT_KEYS = ["🤖 AI", "🧠 Memory", "♟️ Games", "🎵 Music", "🪙 Jarvis Credits", "⏰ Reminders"]
 
@@ -332,7 +348,58 @@ async def _refresh_leaderboard_loop() -> None:
         await _refresh_leaderboard_once()
 
 
-async def _fetch_repo_commits(client: httpx.AsyncClient, repo: str) -> list[dict]:
+def _read_publish_state() -> str:
+    """Last cutoff timestamp we froze the feed at. Falls back to
+    CHANGELOG_CUTOFF the very first time (nothing published yet)."""
+    try:
+        return json.loads(PUBLISH_STATE_FILE.read_text())["published_until"]
+    except Exception:
+        return CHANGELOG_CUTOFF
+
+
+def _write_publish_state(iso_ts: str) -> None:
+    try:
+        PUBLISH_STATE_FILE.write_text(json.dumps({"published_until": iso_ts}))
+    except Exception:
+        pass  # non-fatal — worst case we re-reveal the same batch next TTL
+
+
+async def _get_effective_cutoff(client: httpx.AsyncClient) -> str:
+    """Resolve the real cutoff to filter commits against, honoring the
+    bot's publish_config.json publish flag.
+
+    publish == true  -> reveal everything up to now, and remember "now" as
+                         the new frozen point for next time.
+    publish == false -> stay frozen at whatever was last published (or the
+                         original CHANGELOG_CUTOFF if nothing's shipped yet).
+    """
+    frozen = _read_publish_state()
+    headers = {"Accept": "application/vnd.github.raw", "User-Agent": "jarvis-website"}
+    if GITHUB_TOKEN:
+        headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
+    try:
+        res = await client.get(
+            f"https://raw.githubusercontent.com/{PUBLISH_CONFIG_REPO}/{PUBLISH_CONFIG_BRANCH}/{PUBLISH_CONFIG_PATH}",
+            headers=headers,
+            timeout=REQUEST_TIMEOUT,
+        )
+        res.raise_for_status()
+        publish = bool(res.json().get("publish", False))
+    except Exception:
+        # Can't read the flag -> fail closed, stay frozen rather than leak.
+        return frozen
+
+    if not publish:
+        return frozen
+
+    now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    _write_publish_state(now_iso)
+    return frozen  # this refresh still uses the OLD frozen point so the
+                    # batch that just got published actually shows up;
+                    # the NEW point only takes effect after it's written
+
+
+async def _fetch_repo_commits(client: httpx.AsyncClient, repo: str, cutoff: str) -> list[dict]:
     """Fetch recent commits for one 'owner/repo' from the public GitHub API."""
     headers = {"Accept": "application/vnd.github+json", "User-Agent": "jarvis-website"}
     if GITHUB_TOKEN:
@@ -359,8 +426,8 @@ async def _fetch_repo_commits(client: httpx.AsyncClient, repo: str) -> list[dict
             if message.lower().startswith("merge "):
                 continue  # skip noisy merge commits
             date = commit["author"]["date"]  # ISO 8601, e.g. 2026-07-01T12:34:56Z
-            if date <= CHANGELOG_CUTOFF:
-                continue  # older than the cutoff — part of the old backlog, skip it
+            if date <= cutoff:
+                continue  # older than the cutoff — unpublished/old backlog, skip it
             parsed.append({
                 "repo": repo_label,
                 "message": message,
@@ -380,8 +447,9 @@ async def _refresh_commits_cache() -> list[dict]:
     an immediate refresh (bypassing the TTL check) without duplicating the
     fetch/merge/sort logic.
     """
+    cutoff = await _get_effective_cutoff(http_client)
     results = await asyncio.gather(
-        *(_fetch_repo_commits(http_client, repo) for repo in CHANGELOG_REPOS)
+        *(_fetch_repo_commits(http_client, repo, cutoff) for repo in CHANGELOG_REPOS)
     )
 
     merged = [commit for repo_commits in results for commit in repo_commits]

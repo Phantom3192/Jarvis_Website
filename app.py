@@ -365,13 +365,14 @@ def _write_publish_state(iso_ts: str) -> None:
 
 
 async def _get_effective_cutoff(client: httpx.AsyncClient) -> str:
-    """Resolve the real cutoff to filter commits against, honoring the
-    bot's publish_config.json publish flag.
+    """Resolve the upper-bound timestamp — commits newer than this stay
+    hidden — honoring the bot's publish_config.json publish flag.
 
     publish == true  -> reveal everything up to now, and remember "now" as
-                         the new frozen point for next time.
-    publish == false -> stay frozen at whatever was last published (or the
-                         original CHANGELOG_CUTOFF if nothing's shipped yet).
+                         the new frozen ceiling for next time.
+    publish == false -> cap visibility at whatever was last published (or
+                         the original CHANGELOG_CUTOFF if nothing's shipped
+                         yet), so anything newer stays hidden.
     """
     frozen = _read_publish_state()
     headers = {"Accept": "application/vnd.github.raw", "User-Agent": "jarvis-website"}
@@ -390,17 +391,20 @@ async def _get_effective_cutoff(client: httpx.AsyncClient) -> str:
         return frozen
 
     if not publish:
-        return frozen
+        return frozen  # ceiling stays put -> anything newer stays hidden
 
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     _write_publish_state(now_iso)
-    return frozen  # this refresh still uses the OLD frozen point so the
-                    # batch that just got published actually shows up;
-                    # the NEW point only takes effect after it's written
+    return now_iso  # raise the ceiling to now so the whole pending batch
+                     # (everything between the old and new ceiling) shows up
 
 
-async def _fetch_repo_commits(client: httpx.AsyncClient, repo: str, cutoff: str) -> list[dict]:
-    """Fetch recent commits for one 'owner/repo' from the public GitHub API."""
+async def _fetch_repo_commits(client: httpx.AsyncClient, repo: str, ceiling: str) -> list[dict]:
+    """Fetch recent commits for one 'owner/repo' from the public GitHub API.
+
+    Two bounds apply: CHANGELOG_CUTOFF is the absolute floor (never show the
+    pre-launch backlog), and `ceiling` is the dynamic publish-gate bound
+    (never show commits newer than the last thing that was published)."""
     headers = {"Accept": "application/vnd.github+json", "User-Agent": "jarvis-website"}
     if GITHUB_TOKEN:
         headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
@@ -426,8 +430,10 @@ async def _fetch_repo_commits(client: httpx.AsyncClient, repo: str, cutoff: str)
             if message.lower().startswith("merge "):
                 continue  # skip noisy merge commits
             date = commit["author"]["date"]  # ISO 8601, e.g. 2026-07-01T12:34:56Z
-            if date <= cutoff:
-                continue  # older than the cutoff — unpublished/old backlog, skip it
+            if date <= CHANGELOG_CUTOFF:
+                continue  # older than the site launch — pre-launch backlog, skip it
+            if date > ceiling:
+                continue  # newer than the last publish — still WIP, skip it
             parsed.append({
                 "repo": repo_label,
                 "message": message,
@@ -447,9 +453,9 @@ async def _refresh_commits_cache() -> list[dict]:
     an immediate refresh (bypassing the TTL check) without duplicating the
     fetch/merge/sort logic.
     """
-    cutoff = await _get_effective_cutoff(http_client)
+    ceiling = await _get_effective_cutoff(http_client)
     results = await asyncio.gather(
-        *(_fetch_repo_commits(http_client, repo, cutoff) for repo in CHANGELOG_REPOS)
+        *(_fetch_repo_commits(http_client, repo, ceiling) for repo in CHANGELOG_REPOS)
     )
 
     merged = [commit for repo_commits in results for commit in repo_commits]

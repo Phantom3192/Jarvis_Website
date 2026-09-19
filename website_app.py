@@ -57,6 +57,13 @@ BOT_API_URL = os.getenv("BOT_API_URL", "").rstrip("/")        # e.g. https://jar
 DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", "")
 DEFAULT_BOT_NAME = os.getenv("BOT_NAME", "Jarvis")
 
+# Master switch for the whole music control panel. Off by default —
+# flip to "true" once the panel is actually ready for visitors. While
+# off, /music shows a simple "under construction" page and skips the
+# OAuth/session/bot-lookup logic entirely (no point doing that work for
+# a page nobody can actually use yet).
+MUSIC_FEATURE = os.getenv("MUSIC_FEATURE", "false").strip().lower() in ("1", "true", "yes", "on")
+
 # ── Music panel login (Discord OAuth2) ──────────────────────────────────────
 # Separate from DISCORD_CLIENT_ID's use above (that one's only used to build
 # the public "Add to Discord" invite link — no secret needed for that).
@@ -429,6 +436,8 @@ async def _authorize_panel_request(request: Request, guild_id: str):
     logged in, and the guild must be one this specific user is allowed to
     manage (from their own OAuth guild list, checked at login) AND one the
     bot is actually currently in. Returns (session, error_response)."""
+    if not MUSIC_FEATURE:
+        return None, JSONResponse({"error": "feature_disabled"}, status_code=404)
     session = await _get_session(request)
     if not session:
         return None, JSONResponse({"error": "not_logged_in"}, status_code=401)
@@ -867,6 +876,24 @@ async def auth_logout():
 @app.get("/music")
 async def music_page(request: Request, error: str = ""):
     _, bot_name = await _get_categories()
+
+    if not MUSIC_FEATURE:
+        # Skip OAuth/session/bot-lookup entirely — none of that matters
+        # for a page nobody can actually use yet.
+        return templates.TemplateResponse(
+            "music.html",
+            {
+                "request": request,
+                "invite_url": INVITE_URL,
+                "support_server_url": SUPPORT_SERVER_URL,
+                "bot_name": bot_name,
+                "session": None,
+                "controllable_guilds": [],
+                "oauth_error": "",
+                "music_feature_off": True,
+            },
+        )
+
     session = await _get_session(request)
 
     controllable_guilds: list[dict] = []
@@ -884,6 +911,7 @@ async def music_page(request: Request, error: str = ""):
             "session": session,
             "controllable_guilds": controllable_guilds,
             "oauth_error": error,
+            "music_feature_off": False,
         },
     )
 
@@ -1145,3 +1173,16 @@ async def api_stats():
 @app.get("/healthz")
 async def healthz():
     return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    # Lets this file be run directly (`python3 app.py`) in addition to
+    # the `uvicorn app:app` CLI form used by railway.toml. Some hosts
+    # (this one included, going by its `python3 -u ${STARTUP_FILE}`
+    # launch command) execute the entry file as a plain script rather
+    # than invoking uvicorn's own CLI — without this block, that just
+    # defines all the routes, reaches the end of the file, and exits
+    # cleanly with no error at all, which looks exactly like a silent
+    # crash with nothing in the logs to explain it.
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))

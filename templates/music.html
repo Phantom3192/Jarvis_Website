@@ -78,7 +78,16 @@
   </div>
   {% endif %}
 
-  {% if not session %}
+  {% if music_feature_off %}
+
+  <div class="music-login-gate">
+    <p class="eyebrow">Music control panel</p>
+    <h1>🚧 Under <span class="accent">construction</span></h1>
+    <p class="lede">We're building a full music control panel for {{ bot_name }} right here — play, pause, skip, and manage queues straight from your browser. Check back soon!</p>
+    <a class="btn btn-primary" href="/">Back to home</a>
+  </div>
+
+  {% elif not session %}
 
   <div class="music-login-gate">
     <p class="eyebrow">Music control panel</p>

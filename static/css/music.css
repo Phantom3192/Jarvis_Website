@@ -362,3 +362,13 @@
 }
 
 .music-view[hidden] { display: none; }
+/* Playlist add / import status line */
+.music-import-status {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--green);
+}
+
+.music-import-status.is-error {
+  color: var(--amber);
+}

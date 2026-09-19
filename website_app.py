@@ -442,8 +442,12 @@ async def _call_bot_music_api(
         return {"error": "bot_unreachable"}
 
 
+IMPORT_TIMEOUT = 60.0        # seconds — playlist link imports (YouTube/Spotify) can take a while
+
+
 async def _call_bot_playlist_api(
     method: str, session: dict, path: str, json_body: dict | None = None,
+    timeout: float = REQUEST_TIMEOUT,
 ) -> dict:
     """Same idea as _call_bot_music_api, but for the identity-only
     playlist endpoints (/api/playlists/...), which aren't guild-scoped."""
@@ -454,9 +458,9 @@ async def _call_bot_playlist_api(
     url = f"{BOT_API_URL}{path}"
     try:
         if method == "GET":
-            res = await http_client.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+            res = await http_client.get(url, headers=headers, timeout=timeout)
         else:
-            res = await http_client.post(url, headers=headers, json=json_body or {}, timeout=REQUEST_TIMEOUT)
+            res = await http_client.post(url, headers=headers, json=json_body or {}, timeout=timeout)
         return res.json()
     except Exception:
         return {"error": "bot_unreachable"}
@@ -1086,7 +1090,9 @@ async def panel_playlists_add(request: Request):
         body = await request.json()
     except Exception:
         body = {}
-    return JSONResponse(await _call_bot_playlist_api("POST", session, "/api/playlists/add", body))
+    return JSONResponse(await _call_bot_playlist_api(
+        "POST", session, "/api/playlists/add", body, timeout=IMPORT_TIMEOUT
+    ))
 
 
 @app.post("/api/panel/playlists/{name}/remove")

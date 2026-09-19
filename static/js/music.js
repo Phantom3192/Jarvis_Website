@@ -186,6 +186,7 @@
   const newPlaylistInput = document.getElementById("newPlaylistInput");
   const newPlaylistName = document.getElementById("newPlaylistName");
   const btnCreatePlaylist = document.getElementById("btnCreatePlaylist");
+  const playlistAddStatus = document.getElementById("playlistAddStatus");
   const playlistDetailEmpty = document.getElementById("playlistDetailEmpty");
   const playlistDetail = document.getElementById("playlistDetail");
   const playlistDetailName = document.getElementById("playlistDetailName");
@@ -281,17 +282,45 @@
     });
   }
 
+  const ADD_ERRORS = {
+    spotify_unavailable: "Couldn't read that Spotify link. Make sure the playlist or album is public and the link is correct.",
+    no_results: "Nothing playable was found for that.",
+    name_required: "Give the playlist a name when adding a single song.",
+    not_logged_in: "Your session expired — log in with Discord again.",
+    bot_unreachable: "Jarvis didn't respond in time. If it was a big playlist, check whether it appeared before retrying.",
+    network_error: "Network error — try again.",
+  };
+
+  function showAddStatus(text, isError) {
+    playlistAddStatus.textContent = text;
+    playlistAddStatus.classList.toggle("is-error", !!isError);
+    playlistAddStatus.hidden = !text;
+  }
+
   btnCreatePlaylist.addEventListener("click", async () => {
     const query = newPlaylistInput.value.trim();
     if (!query) return;
     const name = newPlaylistName.value.trim() || null;
+    const isLink = /^https?:\/\/|^spotify:/i.test(query);
     btnCreatePlaylist.disabled = true;
+    showAddStatus(isLink ? "Importing…" : "Adding…", false);
     const result = await callApi("/api/panel/playlists/add", "POST", { name, query });
     btnCreatePlaylist.disabled = false;
+
+    if (!result.ok) {
+      showAddStatus(ADD_ERRORS[result.error] || "Couldn't add that. Try again.", true);
+      return;
+    }
     newPlaylistInput.value = "";
     newPlaylistName.value = "";
+    showAddStatus(
+      result.added
+        ? `Added ${result.added} songs to “${result.name}” (${result.total} total).`
+        : `Added to “${result.name}”.`,
+      false
+    );
     await loadPlaylists();
-    if (result.ok && result.name) selectPlaylist(result.name);
+    if (result.name) selectPlaylist(result.name);
   });
 
   btnRenamePlaylist.addEventListener("click", async () => {

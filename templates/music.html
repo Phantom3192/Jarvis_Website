@@ -187,10 +187,11 @@
 
           <div class="music-playlists-list-col">
             <div class="music-toolbar">
-              <input type="text" id="newPlaylistInput" class="music-play-input" placeholder="Song, URL, or YouTube playlist link">
-              <input type="text" id="newPlaylistName" class="music-play-input music-play-input-narrow" placeholder="Playlist name (optional for YT links)">
+              <input type="text" id="newPlaylistInput" class="music-play-input" placeholder="Song, URL, or YouTube / Spotify playlist link">
+              <input type="text" id="newPlaylistName" class="music-play-input music-play-input-narrow" placeholder="Playlist name (optional for playlist links)">
               <button class="btn btn-primary" id="btnCreatePlaylist">Add</button>
             </div>
+            <p class="music-import-status" id="playlistAddStatus" hidden></p>
             <ul class="music-playlist-names" id="playlistNames">
               <li class="music-queue-empty">Loading your playlists…</li>
             </ul>

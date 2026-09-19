@@ -60,6 +60,10 @@
     bot_unreachable: "Jarvis didn't respond in time — try again in a moment.",
     network_error: "Network error — try again.",
     not_configured: "Music panel isn't fully configured yet.",
+    not_in_voice_channel: "Join the same voice channel as Jarvis to control playback.",
+    forbidden: "You don't have permission to do that here.",
+    not_a_member: "Couldn't verify your membership in that server — try refreshing.",
+    nothing_playing: "Nothing is playing right now.",
   };
 
   // ── Live control (guild-dependent — only if the user has a controllable server) ──
@@ -150,7 +154,8 @@
         });
         queueList.querySelectorAll(".music-queue-remove").forEach((btn) => {
           btn.addEventListener("click", async () => {
-            await api("/queue/remove", "POST", { index: parseInt(btn.dataset.index, 10) });
+            const result = await api("/queue/remove", "POST", { index: parseInt(btn.dataset.index, 10) });
+            if (!result || !result.ok) showToast(TRACK_ERRORS[result && result.error] || "Couldn't remove that. Try again.", true);
             refresh();
           });
         });
@@ -189,6 +194,7 @@
       not_configured: "Music panel isn't fully configured yet.",
       bot_unreachable: "Jarvis didn't respond in time — try again in a moment.",
       network_error: "Network error — try again.",
+      not_in_voice_channel: "Join that voice channel yourself first, then hit Join channel.",
     };
 
     btnJoin.addEventListener("click", async () => {
@@ -215,11 +221,20 @@
       refresh();
     });
 
-    btnPlayPause.addEventListener("click", async () => { await api("/pause", "POST"); refresh(); });
-    btnSkip.addEventListener("click", async () => { await api("/skip", "POST"); refresh(); });
+    btnPlayPause.addEventListener("click", async () => {
+      const result = await api("/pause", "POST");
+      if (!result || !result.ok) showToast(TRACK_ERRORS[result && result.error] || "Couldn't do that. Try again.", true);
+      refresh();
+    });
+    btnSkip.addEventListener("click", async () => {
+      const result = await api("/skip", "POST");
+      if (!result || !result.ok) showToast(TRACK_ERRORS[result && result.error] || "Couldn't do that. Try again.", true);
+      refresh();
+    });
     btnLike.addEventListener("click", async () => {
       btnLike.disabled = true;
-      await api("/like", "POST");
+      const result = await api("/like", "POST");
+      if (!result || !result.ok) showToast(TRACK_ERRORS[result && result.error] || "Couldn't do that. Try again.", true);
       refresh();
     });
 

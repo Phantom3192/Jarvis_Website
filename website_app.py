@@ -105,9 +105,6 @@ DISCORD_OAUTH_SCOPE = "identify guilds"
 # secret means anyone could forge a session cookie for any user.
 SESSION_SECRET = os.getenv("SESSION_SECRET", "")
 SESSION_MAX_AGE = 7 * 24 * 3600  # 7 days
-# Discord permission bit for "Manage Server" — used to decide which of a
-# logged-in user's guilds show up as controllable in the music panel.
-PERM_MANAGE_GUILD = 0x20
 
 # Shared with the bot (set the SAME value as MUSIC_API_SECRET on the bot's
 # deployment — see Jarvis-4.0/web/app.py). Every action the panel sends to
@@ -898,14 +895,15 @@ async def auth_callback(request: Request, code: str = "", state: str = "", error
     except Exception:
         return RedirectResponse(url="/music?error=oauth_discord_unreachable")
 
-    # Only keep guilds this user can actually manage — owner, or has the
-    # Manage Server permission. Everything else is irrelevant to the panel
-    # even if the bot happens to be in it (they shouldn't be able to touch
-    # music in a server they have no authority over).
+    # Keep every guild this user is in where the bot is present — the
+    # panel is open to any member now (same as the bot's own chat
+    # commands, e.g. !skip, which never required a special role either).
+    # Per-action safety comes from the "must be in the same voice channel
+    # as the bot" check on the actual control routes, not from a
+    # Manage Server gate here.
     manageable = [
         {"id": g["id"], "name": g["name"], "icon": g.get("icon")}
         for g in discord_guilds
-        if g.get("owner") or (int(g.get("permissions", 0)) & PERM_MANAGE_GUILD)
     ]
 
     session_payload = {

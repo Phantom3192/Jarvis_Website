@@ -53,20 +53,26 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 BASE_DIR = Path(__file__).parent
 
-# ── Quiet the access log for high-frequency polling endpoints ─────────────
-# The music panel polls /api/panel/{id}/state every 3s per open tab, and
-# the homepage stats widget polls /api/stats — both are expected, harmless
-# traffic that just drowns out anything worth actually noticing in the
-# logs. This filters ONLY those specific noisy paths out of uvicorn's
-# access log; every other request (including errors on these same routes,
-# which uvicorn logs on a different logger) still shows up as normal.
+# ── Quiet the access log for routine panel/API/static traffic ─────────────
+# The music panel hits a bunch of /api/panel/* routes constantly just from
+# normal use (polling state, switching tabs, typing in the search box,
+# loading static assets on every /music page visit) — none of that is
+# worth a log line on its own. Suppress successful (2xx/304) responses on
+# those paths; anything that actually failed (4xx/5xx) still logs
+# normally, so a real problem never gets hidden along with the noise.
 class _SuppressNoisyAccessLogs(logging.Filter):
-    _NOISY_PATH_RE = re.compile(
-        r"\"(?:GET|POST) /(?:api/stats|api/panel/\d+/(?:state|channels)) HTTP"
-    )
+    _NOISY_PREFIXES = ("/api/panel/", "/api/stats", "/static/")
+    _LINE_RE = re.compile(r'"(?:GET|POST|PUT|DELETE) (\S+) HTTP/[\d.]+" (\d{3})')
 
     def filter(self, record: logging.LogRecord) -> bool:
-        return self._NOISY_PATH_RE.search(record.getMessage()) is None
+        match = self._LINE_RE.search(record.getMessage())
+        if not match:
+            return True
+        path, status = match.group(1), match.group(2)
+        if status[0] not in ("2", "3"):
+            return True  # errors always stay visible
+        path_only = path.split("?", 1)[0]
+        return not path_only.startswith(self._NOISY_PREFIXES)
 
 
 logging.getLogger("uvicorn.access").addFilter(_SuppressNoisyAccessLogs())

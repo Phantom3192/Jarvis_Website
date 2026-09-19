@@ -413,6 +413,17 @@ def _sign_music_token(user_id: str, guild_id: str) -> str:
     return f"{body}.{sig}"
 
 
+def _sign_user_token(user_id: str) -> str:
+    """Same signing scheme as _sign_music_token, but for playlist
+    endpoints, which are personal rather than guild-scoped — no guild_id
+    to include, since ownership/sharing is enforced entirely by the
+    bot's own playlist storage, not by a guild permission check."""
+    payload = {"user_id": user_id, "exp": int(time.time()) + MUSIC_TOKEN_TTL}
+    body = base64.urlsafe_b64encode(json.dumps(payload, separators=(",", ":")).encode()).decode()
+    sig = hmac.new(MUSIC_API_SECRET.encode(), body.encode(), hashlib.sha256).hexdigest()
+    return f"{body}.{sig}"
+
+
 async def _call_bot_music_api(
     method: str, guild_id: str, session: dict, path: str, json_body: dict | None = None,
 ) -> dict:
@@ -421,6 +432,26 @@ async def _call_bot_music_api(
     token = _sign_music_token(session["user_id"], guild_id)
     headers = {"X-Music-Token": token}
     url = f"{BOT_API_URL}/api/music/{guild_id}{path}"
+    try:
+        if method == "GET":
+            res = await http_client.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+        else:
+            res = await http_client.post(url, headers=headers, json=json_body or {}, timeout=REQUEST_TIMEOUT)
+        return res.json()
+    except Exception:
+        return {"error": "bot_unreachable"}
+
+
+async def _call_bot_playlist_api(
+    method: str, session: dict, path: str, json_body: dict | None = None,
+) -> dict:
+    """Same idea as _call_bot_music_api, but for the identity-only
+    playlist endpoints (/api/playlists/...), which aren't guild-scoped."""
+    if not BOT_API_URL or not MUSIC_API_SECRET:
+        return {"error": "not_configured"}
+    token = _sign_user_token(session["user_id"])
+    headers = {"X-Music-Token": token}
+    url = f"{BOT_API_URL}{path}"
     try:
         if method == "GET":
             res = await http_client.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
@@ -1007,6 +1038,131 @@ async def panel_queue_remove(guild_id: str, request: Request):
     except Exception:
         body = {}
     return JSONResponse(await _call_bot_music_api("POST", guild_id, session, "/queue/remove", body))
+
+
+# ── Playlist panel API (browser -> website -> bot, identity-only) ───────────
+
+async def _authorize_playlist_request(request: Request):
+    """Playlists aren't guild-scoped, so this only needs a valid login —
+    no guild/bot-presence check like _authorize_panel_request does."""
+    if not MUSIC_FEATURE:
+        return None, JSONResponse({"error": "feature_disabled"}, status_code=404)
+    session = await _get_session(request)
+    if not session:
+        return None, JSONResponse({"error": "not_logged_in"}, status_code=401)
+    return session, None
+
+
+@app.get("/api/panel/playlists")
+async def panel_playlists_list(request: Request):
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_playlist_api("GET", session, "/api/playlists"))
+
+
+@app.get("/api/panel/playlists/inbox")
+async def panel_playlists_inbox(request: Request):
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_playlist_api("GET", session, "/api/playlists/inbox"))
+
+
+@app.get("/api/panel/playlists/{name}")
+async def panel_playlists_get(name: str, request: Request):
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_playlist_api("GET", session, f"/api/playlists/{urllib.parse.quote(name)}"))
+
+
+@app.post("/api/panel/playlists/add")
+async def panel_playlists_add(request: Request):
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    return JSONResponse(await _call_bot_playlist_api("POST", session, "/api/playlists/add", body))
+
+
+@app.post("/api/panel/playlists/{name}/remove")
+async def panel_playlists_remove(name: str, request: Request):
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    return JSONResponse(await _call_bot_playlist_api(
+        "POST", session, f"/api/playlists/{urllib.parse.quote(name)}/remove", body
+    ))
+
+
+@app.post("/api/panel/playlists/{name}/delete")
+async def panel_playlists_delete(name: str, request: Request):
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_playlist_api(
+        "POST", session, f"/api/playlists/{urllib.parse.quote(name)}/delete"
+    ))
+
+
+@app.post("/api/panel/playlists/{name}/rename")
+async def panel_playlists_rename(name: str, request: Request):
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    return JSONResponse(await _call_bot_playlist_api(
+        "POST", session, f"/api/playlists/{urllib.parse.quote(name)}/rename", body
+    ))
+
+
+@app.post("/api/panel/playlists/{name}/share")
+async def panel_playlists_share(name: str, request: Request):
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    return JSONResponse(await _call_bot_playlist_api(
+        "POST", session, f"/api/playlists/{urllib.parse.quote(name)}/share", body
+    ))
+
+
+@app.post("/api/panel/playlists/{name}/revoke")
+async def panel_playlists_revoke(name: str, request: Request):
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    return JSONResponse(await _call_bot_playlist_api(
+        "POST", session, f"/api/playlists/{urllib.parse.quote(name)}/revoke", body
+    ))
+
+
+@app.post("/api/panel/{guild_id}/playlists/{name}/play")
+async def panel_playlist_play(guild_id: str, name: str, request: Request):
+    session, err = await _authorize_panel_request(request, guild_id)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_music_api(
+        "POST", guild_id, session, f"/playlists/{urllib.parse.quote(name)}/play"
+    ))
 
 
 @app.get("/vote")

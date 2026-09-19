@@ -111,8 +111,8 @@
         <a href="#" class="music-sidebar-link is-soon" data-panel="liked">
           <span class="music-icon">❤️</span> Liked Songs <span class="music-soon-tag">Soon</span>
         </a>
-        <a href="#" class="music-sidebar-link is-soon" data-panel="playlists">
-          <span class="music-icon">📁</span> Playlists <span class="music-soon-tag">Soon</span>
+        <a href="#" class="music-sidebar-link" data-panel="playlists">
+          <span class="music-icon">📁</span> Playlists
         </a>
       </nav>
     </aside>
@@ -183,7 +183,54 @@
       </div>
 
       <div id="panel-playlists" class="music-view" hidden>
-        <p class="music-phase-note">🚧 Playlists are coming in a later update.</p>
+        <div class="music-playlists-layout">
+
+          <div class="music-playlists-list-col">
+            <div class="music-toolbar">
+              <input type="text" id="newPlaylistInput" class="music-play-input" placeholder="Song, URL, or YouTube playlist link">
+              <input type="text" id="newPlaylistName" class="music-play-input music-play-input-narrow" placeholder="Playlist name (optional for YT links)">
+              <button class="btn btn-primary" id="btnCreatePlaylist">Add</button>
+            </div>
+            <ul class="music-playlist-names" id="playlistNames">
+              <li class="music-queue-empty">Loading your playlists…</li>
+            </ul>
+
+            <h3 class="music-inbox-heading">Shared with you</h3>
+            <ul class="music-playlist-names" id="playlistInbox">
+              <li class="music-queue-empty">Nothing shared with you yet.</li>
+            </ul>
+          </div>
+
+          <div class="music-playlists-detail-col">
+            <div id="playlistDetailEmpty" class="music-phase-note">Select a playlist on the left to view its songs.</div>
+
+            <div id="playlistDetail" hidden>
+              <div class="music-toolbar">
+                <h3 id="playlistDetailName" class="music-playlist-detail-title"></h3>
+                <span id="playlistPermissionBadge" class="music-soon-tag"></span>
+              </div>
+
+              <div class="music-toolbar" id="playlistOwnerControls">
+                <button class="btn btn-primary" id="btnPlayPlaylist">▶ Play into current server</button>
+                <input type="text" id="renamePlaylistInput" class="music-play-input music-play-input-narrow" placeholder="Rename to…">
+                <button class="music-ctrl-btn" id="btnRenamePlaylist" title="Rename">✎</button>
+                <button class="music-ctrl-btn" id="btnDeletePlaylist" title="Delete">🗑</button>
+              </div>
+
+              <div class="music-toolbar" id="playlistShareControls">
+                <input type="text" id="shareTargetId" class="music-play-input music-play-input-narrow" placeholder="Discord user ID to share with">
+                <select id="sharePermission" class="music-guild-select">
+                  <option value="read">Can view/play</option>
+                  <option value="write">Can also edit</option>
+                </select>
+                <button class="btn btn-primary" id="btnSharePlaylist">Share</button>
+              </div>
+
+              <ul class="music-queue-list" id="playlistTracks"></ul>
+            </div>
+          </div>
+
+        </div>
       </div>
 
     </main>

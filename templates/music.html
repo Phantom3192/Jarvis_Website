@@ -159,12 +159,15 @@
           <span>{{ bot_name }} isn't in a voice channel in this server yet.</span>
           <select id="channelSelect" class="music-guild-select"></select>
           <button class="btn btn-primary" id="btnJoin">Join channel</button>
+          <span class="music-toast" id="joinToast" hidden></span>
         </div>
 
         <div class="music-play-card">
-          <input type="text" id="playInput" class="music-play-input" placeholder="Song name or YouTube URL" disabled>
+          <input type="text" id="playInput" class="music-play-input" placeholder="Song name or YouTube URL" disabled autocomplete="off">
           <button class="btn btn-primary" id="btnPlay" disabled>Play / Queue</button>
+          <ul class="music-search-suggestions" id="searchSuggestions" hidden></ul>
         </div>
+        <p class="music-toast" id="liveToast" hidden></p>
 
         <div class="music-queue-card">
           <h3>Queue</h3>

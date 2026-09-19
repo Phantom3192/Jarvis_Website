@@ -33,6 +33,7 @@ import base64
 import hashlib
 import hmac
 import json
+import logging
 import os
 import re
 import secrets
@@ -51,6 +52,24 @@ from fastapi.templating import Jinja2Templates
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 BASE_DIR = Path(__file__).parent
+
+# ── Quiet the access log for high-frequency polling endpoints ─────────────
+# The music panel polls /api/panel/{id}/state every 3s per open tab, and
+# the homepage stats widget polls /api/stats — both are expected, harmless
+# traffic that just drowns out anything worth actually noticing in the
+# logs. This filters ONLY those specific noisy paths out of uvicorn's
+# access log; every other request (including errors on these same routes,
+# which uvicorn logs on a different logger) still shows up as normal.
+class _SuppressNoisyAccessLogs(logging.Filter):
+    _NOISY_PATH_RE = re.compile(
+        r"\"(?:GET|POST) /(?:api/stats|api/panel/\d+/(?:state|channels)) HTTP"
+    )
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return self._NOISY_PATH_RE.search(record.getMessage()) is None
+
+
+logging.getLogger("uvicorn.access").addFilter(_SuppressNoisyAccessLogs())
 
 # ── Config (set these as Railway environment variables) ───────────────────
 BOT_API_URL = os.getenv("BOT_API_URL", "").rstrip("/")        # e.g. https://jarvis-bot.up.railway.app
@@ -972,6 +991,16 @@ async def panel_channels(guild_id: str, request: Request):
     return JSONResponse(await _call_bot_music_api("GET", guild_id, session, "/channels"))
 
 
+@app.get("/api/panel/{guild_id}/search")
+async def panel_search(guild_id: str, request: Request, q: str = ""):
+    session, err = await _authorize_panel_request(request, guild_id)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_music_api(
+        "GET", guild_id, session, f"/search?q={urllib.parse.quote(q)}"
+    ))
+
+
 @app.post("/api/panel/{guild_id}/join")
 async def panel_join(guild_id: str, request: Request):
     session, err = await _authorize_panel_request(request, guild_id)
@@ -1066,6 +1095,20 @@ async def panel_liked_list(request: Request):
     if err:
         return err
     return JSONResponse(await _call_bot_playlist_api("GET", session, "/api/liked"))
+
+
+@app.post("/api/panel/like")
+async def panel_like_track(request: Request):
+    """Like a specific track from a listing (recommendations, search
+    suggestions) — used by the "⋮" menu's Like action."""
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    return JSONResponse(await _call_bot_playlist_api("POST", session, "/api/like", body))
 
 
 @app.post("/api/panel/liked/remove")

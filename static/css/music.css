@@ -299,6 +299,97 @@
 }
 .music-queue-remove:hover { color: var(--amber); }
 
+/* ── Track row "⋮" menu (Play / Queue / Playlist / Like) ─────── */
+
+.music-track-menu { position: relative; }
+.music-track-menu-btn {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.music-track-menu-btn:hover,
+.music-track-menu-btn.is-open { color: var(--cyan); background: var(--cyan-soft); }
+
+.music-track-menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  min-width: 150px;
+  background: var(--surface-raised);
+  border: 1px solid var(--line-bright);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+.music-track-menu-dropdown[hidden] { display: none; }
+.music-track-menu-item {
+  background: none;
+  border: none;
+  color: var(--text);
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.music-track-menu-item:hover { background: var(--cyan-soft); color: var(--cyan); }
+
+/* ── Inline toast — brief "Added to queue" / error feedback ──── */
+
+.music-toast {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin: -4px 0 14px;
+  min-height: 16px;
+}
+.music-toast.is-error { color: var(--amber); }
+.music-toast[hidden] { display: none; }
+
+/* ── Song search autocomplete ─────────────────────────────────── */
+
+.music-play-card { position: relative; }
+.music-search-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 106px;
+  z-index: 20;
+  background: var(--surface-raised);
+  border: 1px solid var(--line-bright);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  max-height: 320px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+}
+.music-search-suggestions[hidden] { display: none; }
+.music-search-suggestion {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.music-search-suggestion:hover,
+.music-search-suggestion.is-active { background: var(--cyan-soft); }
+.music-search-suggestion .qi-title { color: var(--text); font-size: 13px; }
+.music-search-suggestion .qi-author { color: var(--text-faint); font-size: 12px; }
+
 /* ── Home (mood chips + recommendations) ───────────────────── */
 
 .music-mood-grid {

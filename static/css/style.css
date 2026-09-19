@@ -129,6 +129,7 @@ h1, h2, h3 {
 }
 .nav-links a { text-decoration: none; transition: color .15s; }
 .nav-links a:hover { color: var(--text); }
+.nav-links a.active { color: var(--cyan); }
 .nav-cta {
   font-family: var(--font-mono);
   font-size: 13px;

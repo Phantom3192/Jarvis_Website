@@ -17,12 +17,15 @@ If the bot is unreachable (deploying, crashed, restarting), the site
 still renders fine using cached/fallback data instead of failing.
 """
 import asyncio
+import base64
 import hashlib
 import hmac
 import json
 import os
 import re
+import secrets
 import time
+import urllib.parse
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -40,6 +43,26 @@ BASE_DIR = Path(__file__).parent
 BOT_API_URL = os.getenv("BOT_API_URL", "").rstrip("/")        # e.g. https://jarvis-bot.up.railway.app
 DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", "")
 DEFAULT_BOT_NAME = os.getenv("BOT_NAME", "Jarvis")
+
+# ── Music panel login (Discord OAuth2) ──────────────────────────────────────
+# Separate from DISCORD_CLIENT_ID's use above (that one's only used to build
+# the public "Add to Discord" invite link — no secret needed for that).
+# Logging in for the music panel is a real OAuth2 flow, so it needs the
+# application's client secret too (Discord Developer Portal -> your app ->
+# OAuth2 -> Client Secret). Uses the "identify guilds" scope to find out
+# which servers a visitor is actually in and what permissions they hold
+# there — never asked to do anything on the user's behalf beyond that.
+DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", "")
+DISCORD_OAUTH_SCOPE = "identify guilds"
+# Signs the session cookie issued after login (HMAC, not encryption — the
+# payload is non-secret: just a Discord user id/username/avatar + which of
+# their guilds are manageable). MUST be set in production; a blank/default
+# secret means anyone could forge a session cookie for any user.
+SESSION_SECRET = os.getenv("SESSION_SECRET", "")
+SESSION_MAX_AGE = 7 * 24 * 3600  # 7 days
+# Discord permission bit for "Manage Server" — used to decide which of a
+# logged-in user's guilds show up as controllable in the music panel.
+PERM_MANAGE_GUILD = 0x20
 
 INVITE_PERMISSIONS = "414531833920"  # send/embed/history/react/connect/speak/manage messages
 INVITE_URL = (
@@ -299,6 +322,51 @@ async def _fetch_json(path: str, timeout: float = REQUEST_TIMEOUT) -> dict | Non
         return res.json()
     except Exception:
         return None
+
+
+async def _get_bot_guild_ids() -> set[str]:
+    """Which guild IDs the bot is actually in right now, straight from
+    /api/guilds — no caching layer here (unlike stats/leaderboard) since
+    this is only called on a login/panel page load, not polled, so it's
+    already at most one bot API call per visitor action, not per second."""
+    data = await _fetch_json("/api/guilds")
+    if not data:
+        return set()
+    return {g["id"] for g in data.get("guilds", [])}
+
+
+# ── Session signing (music panel login) ─────────────────────────────────────
+# Lightweight HMAC-signed cookie — no server-side session store needed since
+# the payload itself is small and non-secret. Same pattern as the
+# HMAC-verified webhooks below (hmac.compare_digest to avoid timing leaks).
+
+def _sign_session(payload: dict) -> str:
+    body = base64.urlsafe_b64encode(json.dumps(payload, separators=(",", ":")).encode()).decode()
+    sig = hmac.new(SESSION_SECRET.encode(), body.encode(), hashlib.sha256).hexdigest()
+    return f"{body}.{sig}"
+
+
+def _verify_session(token: str | None) -> dict | None:
+    if not token or not SESSION_SECRET:
+        return None
+    try:
+        body, sig = token.rsplit(".", 1)
+    except ValueError:
+        return None
+    expected = hmac.new(SESSION_SECRET.encode(), body.encode(), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected, sig):
+        return None
+    try:
+        payload = json.loads(base64.urlsafe_b64decode(body.encode()))
+    except Exception:
+        return None
+    if payload.get("exp", 0) < time.time():
+        return None
+    return payload
+
+
+async def _get_session(request: Request) -> dict | None:
+    return _verify_session(request.cookies.get("jarvis_session"))
 
 
 async def _get_stats() -> dict:
@@ -587,6 +655,132 @@ async def api_leaderboard():
     """Proxied + cached the same way /api/stats is — see _get_leaderboard()."""
     data = await _get_leaderboard()
     return JSONResponse(data)
+
+
+# ── Music panel: Discord OAuth2 login ───────────────────────────────────────
+
+@app.get("/auth/login")
+async def auth_login(request: Request):
+    if not DISCORD_CLIENT_ID or not DISCORD_CLIENT_SECRET:
+        return RedirectResponse(url="/music?error=oauth_not_configured")
+    # A random one-time value, stashed in a short-lived cookie and checked
+    # against Discord's redirect back — standard OAuth2 CSRF protection so
+    # a malicious site can't trick a logged-in browser into completing a
+    # login flow it never started.
+    oauth_state = secrets.token_urlsafe(24)
+    redirect_uri = str(request.url_for("auth_callback"))
+    params = {
+        "client_id": DISCORD_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": DISCORD_OAUTH_SCOPE,
+        "state": oauth_state,
+        "prompt": "consent",
+    }
+    url = "https://discord.com/oauth2/authorize?" + urllib.parse.urlencode(params)
+    resp = RedirectResponse(url=url)
+    resp.set_cookie("jarvis_oauth_state", oauth_state, httponly=True, secure=True,
+                     samesite="lax", max_age=600)
+    return resp
+
+
+@app.get("/auth/callback")
+async def auth_callback(request: Request, code: str = "", state: str = "", error: str = ""):
+    if error:
+        # User clicked "Cancel" on Discord's consent screen, or something
+        # else went wrong on Discord's side — not a bug on ours.
+        return RedirectResponse(url="/music?error=oauth_denied")
+
+    expected_state = request.cookies.get("jarvis_oauth_state", "")
+    if not code or not state or not hmac.compare_digest(state, expected_state):
+        return RedirectResponse(url="/music?error=oauth_state_mismatch")
+
+    redirect_uri = str(request.url_for("auth_callback"))
+    try:
+        token_resp = await http_client.post(
+            "https://discord.com/api/oauth2/token",
+            data={
+                "client_id": DISCORD_CLIENT_ID,
+                "client_secret": DISCORD_CLIENT_SECRET,
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": redirect_uri,
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        token_resp.raise_for_status()
+        access_token = token_resp.json().get("access_token")
+        if not access_token:
+            return RedirectResponse(url="/music?error=oauth_token_failed")
+
+        auth_header = {"Authorization": f"Bearer {access_token}"}
+        user_resp = await http_client.get("https://discord.com/api/users/@me", headers=auth_header)
+        user_resp.raise_for_status()
+        user = user_resp.json()
+
+        guilds_resp = await http_client.get("https://discord.com/api/users/@me/guilds", headers=auth_header)
+        guilds_resp.raise_for_status()
+        discord_guilds = guilds_resp.json()
+    except Exception:
+        return RedirectResponse(url="/music?error=oauth_discord_unreachable")
+
+    # Only keep guilds this user can actually manage — owner, or has the
+    # Manage Server permission. Everything else is irrelevant to the panel
+    # even if the bot happens to be in it (they shouldn't be able to touch
+    # music in a server they have no authority over).
+    manageable = [
+        {"id": g["id"], "name": g["name"], "icon": g.get("icon")}
+        for g in discord_guilds
+        if g.get("owner") or (int(g.get("permissions", 0)) & PERM_MANAGE_GUILD)
+    ]
+
+    session_payload = {
+        "user_id": user["id"],
+        "username": user.get("global_name") or user.get("username"),
+        "avatar": user.get("avatar"),
+        "guilds": manageable,
+        "exp": int(time.time()) + SESSION_MAX_AGE,
+    }
+    token = _sign_session(session_payload)
+
+    resp = RedirectResponse(url="/music")
+    resp.set_cookie(
+        "jarvis_session", token,
+        httponly=True, secure=True, samesite="lax", max_age=SESSION_MAX_AGE,
+    )
+    resp.delete_cookie("jarvis_oauth_state")
+    return resp
+
+
+@app.get("/auth/logout")
+async def auth_logout():
+    resp = RedirectResponse(url="/music")
+    resp.delete_cookie("jarvis_session")
+    return resp
+
+
+@app.get("/music")
+async def music_page(request: Request, error: str = ""):
+    _, bot_name = await _get_categories()
+    session = await _get_session(request)
+
+    controllable_guilds: list[dict] = []
+    if session:
+        bot_guild_ids = await _get_bot_guild_ids()
+        controllable_guilds = [g for g in session["guilds"] if g["id"] in bot_guild_ids]
+
+    return templates.TemplateResponse(
+        "music.html",
+        {
+            "request": request,
+            "invite_url": INVITE_URL,
+            "support_server_url": SUPPORT_SERVER_URL,
+            "bot_name": bot_name,
+            "session": session,
+            "controllable_guilds": controllable_guilds,
+            "oauth_error": error,
+        },
+    )
 
 
 @app.get("/vote")

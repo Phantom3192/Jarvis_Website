@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music — {{ bot_name }}</title>
+<meta name="description" content="Control {{ bot_name }}'s music playback for your server right from the browser.">
+<meta name="theme-color" content="#5ee7ff">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{ bot_name }}">
+<meta property="og:title" content="Music — {{ bot_name }}">
+<meta property="og:description" content="Control {{ bot_name }}'s music playback for your server right from the browser.">
+<meta property="og:image" content="{{ url_for('static', path='img/hero-bg.png') }}">
+<meta property="og:url" content="{{ request.url }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Music — {{ bot_name }}">
+<meta name="twitter:description" content="Control {{ bot_name }}'s music playback for your server right from the browser.">
+<meta name="twitter:image" content="{{ url_for('static', path='img/hero-bg.png') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="stylesheet" href="/static/css/music.css">
+<link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/static/img/icon-192.png">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a href="/" class="nav-brand"><span class="dot"></span>{{ bot_name }}</a>
+    <div class="nav-links">
+      <a href="/music" class="active">Music</a>
+      <a href="/">Home</a>
+      <a href="/status">Status</a>
+      <a href="/leaderboard">Leaderboard</a>
+      <a href="/vote">Vote</a>
+      <a href="/changelog">Changelog</a>
+      <a href="/guide">Guide</a>
+      <a href="/about">About</a>
+    </div>
+    <div class="nav-ctas">
+      {% if session %}
+        <span class="music-nav-user">
+          {% if session.avatar %}
+            <img src="https://cdn.discordapp.com/avatars/{{ session.user_id }}/{{ session.avatar }}.png?size=64" alt="">
+          {% endif %}
+          {{ session.username }}
+        </span>
+        <a class="nav-cta nav-cta-ghost" href="/auth/logout">Log out</a>
+      {% else %}
+        <a class="nav-cta" href="/auth/login">Log in with Discord</a>
+      {% endif %}
+    </div>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="nav-mobile" id="navMobile"></div>
+</nav>
+
+<section class="music-shell wrap">
+
+  {% if oauth_error %}
+  <div class="music-alert">
+    {% if oauth_error == "oauth_denied" %}
+      Login was cancelled — nothing was changed.
+    {% elif oauth_error == "oauth_state_mismatch" %}
+      That login link expired or was already used — please try logging in again.
+    {% elif oauth_error == "oauth_not_configured" %}
+      Music panel login isn't configured on this deployment yet.
+    {% else %}
+      Something went wrong talking to Discord — please try again.
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if not session %}
+
+  <div class="music-login-gate">
+    <p class="eyebrow">Music control panel</p>
+    <h1>Control <span class="accent">{{ bot_name }}</span>'s music from your browser.</h1>
+    <p class="lede">Log in with Discord to see which of your servers {{ bot_name }} can play music in, then control playback, queue songs, and manage playlists — all without touching Discord itself.</p>
+    <a class="btn btn-primary" href="/auth/login">Log in with Discord</a>
+  </div>
+
+  {% else %}
+
+  <div class="music-panel">
+
+    <aside class="music-sidebar">
+      <nav class="music-sidebar-nav">
+        <a href="#" class="music-sidebar-link active" data-panel="live">
+          <span class="music-icon">🎛️</span> Live Control
+        </a>
+        <a href="#" class="music-sidebar-link is-soon" data-panel="home">
+          <span class="music-icon">🏠</span> Home <span class="music-soon-tag">Soon</span>
+        </a>
+        <a href="#" class="music-sidebar-link is-soon" data-panel="liked">
+          <span class="music-icon">❤️</span> Liked Songs <span class="music-soon-tag">Soon</span>
+        </a>
+        <a href="#" class="music-sidebar-link is-soon" data-panel="playlists">
+          <span class="music-icon">📁</span> Playlists <span class="music-soon-tag">Soon</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="music-main">
+
+      <div id="panel-live" class="music-view">
+        <div class="music-toolbar">
+          <label for="guildSelect" class="music-toolbar-label">Server</label>
+          {% if controllable_guilds %}
+            <select id="guildSelect" class="music-guild-select">
+              {% for g in controllable_guilds %}
+                <option value="{{ g.id }}">{{ g.name }}</option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <span class="music-empty-note">
+              No manageable servers found where {{ bot_name }} is present.
+              Make sure {{ bot_name }} is invited to a server you manage, then refresh.
+            </span>
+          {% endif %}
+        </div>
+
+        {% if controllable_guilds %}
+        <div class="music-nowplaying-card" id="nowPlayingCard">
+          <div class="music-nowplaying-art" id="npArt"></div>
+          <div class="music-nowplaying-info">
+            <div class="music-nowplaying-title" id="npTitle">Nothing playing yet</div>
+            <div class="music-nowplaying-sub" id="npSub">Pick a server above to connect</div>
+            <div class="music-progress">
+              <div class="music-progress-fill" id="npProgressFill"></div>
+            </div>
+          </div>
+          <div class="music-controls">
+            <button class="music-ctrl-btn" id="btnPrev" title="Previous" disabled>⏮</button>
+            <button class="music-ctrl-btn music-ctrl-primary" id="btnPlayPause" title="Play/Pause" disabled>▶</button>
+            <button class="music-ctrl-btn" id="btnSkip" title="Skip" disabled>⏭</button>
+            <button class="music-ctrl-btn" id="btnVolume" title="Volume" disabled>🔊</button>
+          </div>
+        </div>
+
+        <div class="music-queue-card">
+          <h3>Queue</h3>
+          <ul class="music-queue-list" id="queueList">
+            <li class="music-queue-empty">Connect to a server to see its queue.</li>
+          </ul>
+        </div>
+
+        <p class="music-phase-note">
+          🚧 Live playback control (play/pause/skip/queue) is wired up next — this shell is connected to your Discord servers, but the actual controls above aren't live yet.
+        </p>
+        {% endif %}
+      </div>
+
+      <div id="panel-home" class="music-view" hidden>
+        <p class="music-phase-note">🚧 Home &amp; genre recommendations are coming in a later update.</p>
+      </div>
+
+      <div id="panel-liked" class="music-view" hidden>
+        <p class="music-phase-note">🚧 Liked Songs are coming in a later update.</p>
+      </div>
+
+      <div id="panel-playlists" class="music-view" hidden>
+        <p class="music-phase-note">🚧 Playlists are coming in a later update.</p>
+      </div>
+
+    </main>
+  </div>
+
+  {% endif %}
+
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-brand">{{ bot_name }} — system console</div>
+    <div class="footer-links">
+      <a href="{{ invite_url }}">Add to Discord</a>
+      <a href="/status">Status</a>
+      <a href="/leaderboard">Leaderboard</a>
+      <a href="/vote">Vote</a>
+      <a href="/changelog">Changelog</a>
+      <a href="/guide">Guide</a>
+      <a href="/about">About</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/static/js/main.js"></script>
+<script src="/static/js/music.js"></script>
+</body>
+</html>

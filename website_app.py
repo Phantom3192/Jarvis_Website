@@ -16,6 +16,18 @@ scaling — the only coupling is one env var (BOT_API_URL).
 If the bot is unreachable (deploying, crashed, restarting), the site
 still renders fine using cached/fallback data instead of failing.
 """
+# faulthandler must be enabled before anything else runs. A normal Python
+# exception always prints a traceback on its own — but a hard native-level
+# crash (segfault, abort, bus error — e.g. from a C extension like uvloop
+# or httptools being incompatible with the running Python version) kills
+# the process with NO traceback at all, which is otherwise impossible to
+# diagnose from hosting logs alone. faulthandler installs a signal handler
+# that dumps a low-level stack trace to stderr the instant that happens,
+# so even that class of crash becomes visible instead of silent.
+import faulthandler
+import sys
+faulthandler.enable(file=sys.stderr, all_threads=True)
+
 import asyncio
 import base64
 import hashlib
@@ -25,6 +37,7 @@ import os
 import re
 import secrets
 import time
+import traceback
 import urllib.parse
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -180,20 +193,46 @@ async def lifespan(_app: FastAPI):
     # Pull everything once, right now, before we start serving requests —
     # so the very first visitor after a deploy/restart already sees real
     # data instead of the empty/fallback state for a few seconds.
-    await asyncio.gather(
-        _refresh_stats_once(),
-        _refresh_categories_once(),
-        _refresh_leaderboard_once(),
-    )
+    #
+    # Wrapped explicitly: without this, an unexpected exception here
+    # aborts FastAPI startup and uvicorn's own traceback is the only
+    # record of it — which is fine normally, but has been hard to
+    # confirm from this deployment's log capture. This guarantees the
+    # full traceback is flushed to stderr before anything re-raises.
+    try:
+        await asyncio.gather(
+            _refresh_stats_once(),
+            _refresh_categories_once(),
+            _refresh_leaderboard_once(),
+        )
+    except Exception:
+        print("=" * 70, file=sys.stderr, flush=True)
+        print("FATAL: startup data refresh failed — see traceback below", file=sys.stderr, flush=True)
+        traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
+        raise
 
     # Then hand off to the three background loops, which keep re-pulling
     # on their own fixed schedules for the rest of the process's life —
     # completely independent of how many people are visiting the site.
-    _background_tasks.extend([
-        asyncio.create_task(_refresh_stats_loop()),
-        asyncio.create_task(_refresh_categories_loop()),
-        asyncio.create_task(_refresh_leaderboard_loop()),
-    ])
+    def _log_task_crash(task: asyncio.Task) -> None:
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc is not None:
+            print("=" * 70, file=sys.stderr, flush=True)
+            print(f"FATAL: background task {task.get_name()} crashed", file=sys.stderr, flush=True)
+            traceback.print_exception(type(exc), exc, exc.__traceback__, file=sys.stderr)
+            sys.stderr.flush()
+
+    for coro, name in (
+        (_refresh_stats_loop(), "stats_loop"),
+        (_refresh_categories_loop(), "categories_loop"),
+        (_refresh_leaderboard_loop(), "leaderboard_loop"),
+    ):
+        task = asyncio.create_task(coro, name=name)
+        task.add_done_callback(_log_task_crash)
+        _background_tasks.append(task)
 
     try:
         yield
@@ -204,6 +243,18 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="Jarvis Website", docs_url=None, redoc_url=None, lifespan=lifespan)
+
+
+@app.exception_handler(Exception)
+async def _log_unhandled_exception(request: Request, exc: Exception):
+    """Without this, FastAPI/Starlette still returns a 500 to the client
+    but the traceback's visibility in hosting logs depends on the ASGI
+    server's own logging config. This guarantees it's printed."""
+    print("=" * 70, file=sys.stderr, flush=True)
+    print(f"FATAL: unhandled exception on {request.method} {request.url.path}", file=sys.stderr, flush=True)
+    traceback.print_exc(file=sys.stderr)
+    sys.stderr.flush()
+    return JSONResponse({"error": "internal_error"}, status_code=500)
 # Railway (like most PaaS) terminates TLS at its edge and forwards plain
 # HTTP internally, tagging the original scheme in X-Forwarded-Proto. Without
 # this, request.url.scheme (and therefore url_for(...) / request.url used

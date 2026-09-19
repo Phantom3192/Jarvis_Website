@@ -105,11 +105,11 @@
         <a href="#" class="music-sidebar-link active" data-panel="live">
           <span class="music-icon">🎛️</span> Live Control
         </a>
-        <a href="#" class="music-sidebar-link is-soon" data-panel="home">
-          <span class="music-icon">🏠</span> Home <span class="music-soon-tag">Soon</span>
+        <a href="#" class="music-sidebar-link" data-panel="home">
+          <span class="music-icon">🏠</span> Home
         </a>
-        <a href="#" class="music-sidebar-link is-soon" data-panel="liked">
-          <span class="music-icon">❤️</span> Liked Songs <span class="music-soon-tag">Soon</span>
+        <a href="#" class="music-sidebar-link" data-panel="liked">
+          <span class="music-icon">❤️</span> Liked Songs
         </a>
         <a href="#" class="music-sidebar-link" data-panel="playlists">
           <span class="music-icon">📁</span> Playlists
@@ -147,6 +147,7 @@
             </div>
           </div>
           <div class="music-controls">
+            <button class="music-ctrl-btn" id="btnLike" title="Like" disabled>🤍</button>
             <button class="music-ctrl-btn" id="btnPrev" title="Previous" disabled>⏮</button>
             <button class="music-ctrl-btn music-ctrl-primary" id="btnPlayPause" title="Play/Pause" disabled>▶</button>
             <button class="music-ctrl-btn" id="btnSkip" title="Skip" disabled>⏭</button>
@@ -175,11 +176,23 @@
       </div>
 
       <div id="panel-home" class="music-view" hidden>
-        <p class="music-phase-note">🚧 Home &amp; genre recommendations are coming in a later update.</p>
+        <h3 class="music-inbox-heading" style="margin-top:0">Browse by mood</h3>
+        <div class="music-mood-grid" id="moodGrid"></div>
+
+        <div id="moodResults" class="music-mood-results" hidden>
+          <div class="music-toolbar">
+            <h3 id="moodResultsTitle" class="music-playlist-detail-title"></h3>
+          </div>
+          <ul class="music-queue-list" id="moodResultsList"></ul>
+        </div>
+
+        <div id="homeBasedOn"></div>
       </div>
 
       <div id="panel-liked" class="music-view" hidden>
-        <p class="music-phase-note">🚧 Liked Songs are coming in a later update.</p>
+        <ul class="music-queue-list" id="likedList">
+          <li class="music-queue-empty">Loading your liked songs…</li>
+        </ul>
       </div>
 
       <div id="panel-playlists" class="music-view" hidden>

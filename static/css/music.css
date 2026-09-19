@@ -299,6 +299,38 @@
 }
 .music-queue-remove:hover { color: var(--amber); }
 
+/* ── Home (mood chips + recommendations) ───────────────────── */
+
+.music-mood-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 24px;
+}
+.music-mood-chip {
+  background: var(--surface);
+  border: 1px solid var(--line-bright);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.music-mood-chip:hover { border-color: var(--cyan); background: var(--cyan-soft); }
+
+.music-mood-results { margin-bottom: 24px; }
+
+.music-home-section { margin-bottom: 24px; }
+
+.music-liked-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 /* ── Playlists ──────────────────────────────────────────────── */
 
 .music-playlists-layout {
@@ -362,6 +394,7 @@
 }
 
 .music-view[hidden] { display: none; }
+.music-join-card[hidden] { display: none; }
 /* Playlist add / import status line */
 .music-import-status {
   margin: 10px 0 0;

@@ -1044,6 +1044,60 @@ async def panel_queue_remove(guild_id: str, request: Request):
     return JSONResponse(await _call_bot_music_api("POST", guild_id, session, "/queue/remove", body))
 
 
+@app.post("/api/panel/{guild_id}/like")
+async def panel_like(guild_id: str, request: Request):
+    """Like/unlike whatever's currently playing in this guild. Guild-scoped
+    (unlike the /api/panel/liked/* routes below) because the bot needs a
+    voice-connected player to know what "currently playing" even means."""
+    session, err = await _authorize_panel_request(request, guild_id)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_music_api("POST", guild_id, session, "/like"))
+
+
+# ── Liked Songs / Home panel API (browser -> website -> bot, identity-only) ─
+# Same "just needs a login, no guild/bot-presence check" shape as the
+# playlist routes right below — liked songs and Home recommendations are
+# per-user, not per-server.
+
+@app.get("/api/panel/liked")
+async def panel_liked_list(request: Request):
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_playlist_api("GET", session, "/api/liked"))
+
+
+@app.post("/api/panel/liked/remove")
+async def panel_liked_remove(request: Request):
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    return JSONResponse(await _call_bot_playlist_api("POST", session, "/api/liked/remove", body))
+
+
+@app.get("/api/panel/home")
+async def panel_home(request: Request):
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    # Builds live "based on your likes" search results on the bot side —
+    # give it more room than the usual 5s bot-call timeout.
+    return JSONResponse(await _call_bot_playlist_api("GET", session, "/api/home", timeout=20.0))
+
+
+@app.get("/api/panel/home/mood/{mood_id}")
+async def panel_home_mood(mood_id: str, request: Request):
+    session, err = await _authorize_playlist_request(request)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_playlist_api("GET", session, f"/api/home/mood/{mood_id}", timeout=20.0))
+
+
 # ── Playlist panel API (browser -> website -> bot, identity-only) ───────────
 
 async def _authorize_playlist_request(request: Request):

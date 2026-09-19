@@ -15,6 +15,8 @@
         view.hidden = view.id !== `panel-${target}`;
       });
       if (target === "playlists") loadPlaylists();
+      if (target === "home") loadHome();
+      if (target === "liked") loadLikedSongs();
     });
   });
 
@@ -56,6 +58,7 @@
     const btnJoin = document.getElementById("btnJoin");
     const playInput = document.getElementById("playInput");
     const btnPlay = document.getElementById("btnPlay");
+    const btnLike = document.getElementById("btnLike");
 
     let pollTimer = null;
 
@@ -77,6 +80,8 @@
         npProgressFill.style.width = "0%";
         btnPlayPause.disabled = true;
         btnSkip.disabled = true;
+        btnLike.disabled = true;
+        btnLike.textContent = "🤍";
         playInput.disabled = true;
         btnPlay.disabled = true;
         queueList.innerHTML = '<li class="music-queue-empty">Not connected to a voice channel.</li>';
@@ -97,6 +102,8 @@
         btnPlayPause.textContent = state.paused ? "▶" : "⏸";
         btnPlayPause.disabled = false;
         btnSkip.disabled = false;
+        btnLike.disabled = false;
+        btnLike.textContent = state.current.liked ? "❤️" : "🤍";
       } else {
         npTitle.textContent = "Nothing playing";
         npSub.textContent = state.channel_name ? `Connected to ${state.channel_name}` : "";
@@ -104,6 +111,8 @@
         npProgressFill.style.width = "0%";
         btnPlayPause.disabled = true;
         btnSkip.disabled = true;
+        btnLike.disabled = true;
+        btnLike.textContent = "🤍";
       }
 
       if (state.queue && state.queue.length) {
@@ -162,6 +171,11 @@
 
     btnPlayPause.addEventListener("click", async () => { await api("/pause", "POST"); refresh(); });
     btnSkip.addEventListener("click", async () => { await api("/skip", "POST"); refresh(); });
+    btnLike.addEventListener("click", async () => {
+      btnLike.disabled = true;
+      await api("/like", "POST");
+      refresh();
+    });
 
     btnPlay.addEventListener("click", async () => {
       const query = playInput.value.trim();
@@ -175,6 +189,121 @@
     playInput.addEventListener("keydown", (e) => { if (e.key === "Enter") btnPlay.click(); });
 
     startPolling();
+  }
+
+  // ── Home (mood browse + "based on your likes") ─────────────────────────
+
+  async function queueTrack(t) {
+    if (!currentGuildId) {
+      alert("Pick a server in Live Control first.");
+      return;
+    }
+    const query = t.uri || `${t.author || ""} ${t.title || ""}`.trim();
+    await callApi(`/api/panel/${currentGuildId}/play`, "POST", { query });
+  }
+
+  function trackRow(t, onAdd, extraButtons = "") {
+    const li = document.createElement("li");
+    li.className = "music-queue-item";
+    li.innerHTML = `
+      <span><span class="qi-title">${escapeHtml(t.title)}</span> <span class="qi-author">${escapeHtml(t.author)}</span></span>
+      <span class="music-liked-actions">
+        <button class="music-queue-remove music-queue-add" title="Queue in current server">➕</button>
+        ${extraButtons}
+      </span>
+    `;
+    li.querySelector(".music-queue-add").addEventListener("click", () => onAdd(t));
+    return li;
+  }
+
+  async function loadMood(id, label) {
+    const resultsWrap = document.getElementById("moodResults");
+    const resultsTitle = document.getElementById("moodResultsTitle");
+    const resultsList = document.getElementById("moodResultsList");
+    if (!resultsWrap) return;
+    resultsWrap.hidden = false;
+    resultsTitle.textContent = label;
+    resultsList.innerHTML = '<li class="music-queue-empty">Loading…</li>';
+    const data = await callApi(`/api/panel/home/mood/${encodeURIComponent(id)}`);
+    if (!data.ok) {
+      resultsList.innerHTML = '<li class="music-queue-empty">Couldn\u2019t load that mood right now.</li>';
+      return;
+    }
+    resultsList.innerHTML = "";
+    (data.tracks || []).forEach((t) => resultsList.appendChild(trackRow(t, queueTrack)));
+  }
+
+  async function loadHome() {
+    const moodGrid = document.getElementById("moodGrid");
+    const homeBasedOn = document.getElementById("homeBasedOn");
+    if (!moodGrid) return;
+    moodGrid.innerHTML = '<span class="music-queue-empty">Loading…</span>';
+    homeBasedOn.innerHTML = "";
+    const data = await callApi("/api/panel/home");
+    if (!data.moods) {
+      moodGrid.innerHTML = '<span class="music-queue-empty">Couldn\u2019t load recommendations right now.</span>';
+      return;
+    }
+
+    moodGrid.innerHTML = "";
+    data.moods.forEach((m) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "music-mood-chip";
+      btn.textContent = m.label;
+      btn.addEventListener("click", () => loadMood(m.id, m.label));
+      moodGrid.appendChild(btn);
+    });
+
+    if (data.based_on && data.based_on.length) {
+      data.based_on.forEach((section) => {
+        const wrap = document.createElement("div");
+        wrap.className = "music-home-section";
+        const heading = document.createElement("h3");
+        heading.className = "music-inbox-heading";
+        heading.textContent = `Because you like ${section.seed}`;
+        const ul = document.createElement("ul");
+        ul.className = "music-queue-list";
+        section.tracks.forEach((t) => ul.appendChild(trackRow(t, queueTrack)));
+        wrap.appendChild(heading);
+        wrap.appendChild(ul);
+        homeBasedOn.appendChild(wrap);
+      });
+    } else {
+      const note = document.createElement("p");
+      note.className = "music-phase-note";
+      note.textContent = "Like a few songs or play some music and we'll start recommending more like it here.";
+      homeBasedOn.appendChild(note);
+    }
+  }
+
+  // ── Liked Songs ──────────────────────────────────────────────────────────
+
+  async function loadLikedSongs() {
+    const likedList = document.getElementById("likedList");
+    if (!likedList) return;
+    likedList.innerHTML = '<li class="music-queue-empty">Loading your liked songs…</li>';
+    const data = await callApi("/api/panel/liked");
+    if (!data.liked) {
+      likedList.innerHTML = '<li class="music-queue-empty">Couldn\u2019t load liked songs.</li>';
+      return;
+    }
+    if (!data.liked.length) {
+      likedList.innerHTML = '<li class="music-queue-empty">No liked songs yet — hit 🤍 on a track playing in Live Control.</li>';
+      return;
+    }
+    likedList.innerHTML = "";
+    data.liked.forEach((t, i) => {
+      const row = trackRow(
+        t, queueTrack,
+        '<button class="music-queue-remove" title="Unlike">✕</button>'
+      );
+      row.querySelector('[title="Unlike"]').addEventListener("click", async () => {
+        await callApi("/api/panel/liked/remove", "POST", { index: i });
+        loadLikedSongs();
+      });
+      likedList.appendChild(row);
+    });
   }
 
   // ── Playlists ────────────────────────────────────────────────────────────

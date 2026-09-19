@@ -145,16 +145,23 @@
           </div>
         </div>
 
+        <div class="music-join-card" id="joinCard" hidden>
+          <span>{{ bot_name }} isn't in a voice channel in this server yet.</span>
+          <select id="channelSelect" class="music-guild-select"></select>
+          <button class="btn btn-primary" id="btnJoin">Join channel</button>
+        </div>
+
+        <div class="music-play-card">
+          <input type="text" id="playInput" class="music-play-input" placeholder="Song name or YouTube URL" disabled>
+          <button class="btn btn-primary" id="btnPlay" disabled>Play / Queue</button>
+        </div>
+
         <div class="music-queue-card">
           <h3>Queue</h3>
           <ul class="music-queue-list" id="queueList">
             <li class="music-queue-empty">Connect to a server to see its queue.</li>
           </ul>
         </div>
-
-        <p class="music-phase-note">
-          🚧 Live playback control (play/pause/skip/queue) is wired up next — this shell is connected to your Discord servers, but the actual controls above aren't live yet.
-        </p>
         {% endif %}
       </div>
 

@@ -64,6 +64,13 @@ SESSION_MAX_AGE = 7 * 24 * 3600  # 7 days
 # logged-in user's guilds show up as controllable in the music panel.
 PERM_MANAGE_GUILD = 0x20
 
+# Shared with the bot (set the SAME value as MUSIC_API_SECRET on the bot's
+# deployment — see Jarvis-4.0/web/app.py). Every action the panel sends to
+# the bot is signed with this and expires in MUSIC_TOKEN_TTL seconds, so a
+# leaked/logged token is only ever usable for a few seconds.
+MUSIC_API_SECRET = os.getenv("MUSIC_API_SECRET", "")
+MUSIC_TOKEN_TTL = 60
+
 INVITE_PERMISSIONS = "414531833920"  # send/embed/history/react/connect/speak/manage messages
 INVITE_URL = (
     f"https://discord.com/oauth2/authorize?client_id={DISCORD_CLIENT_ID}"
@@ -333,6 +340,53 @@ async def _get_bot_guild_ids() -> set[str]:
     if not data:
         return set()
     return {g["id"] for g in data.get("guilds", [])}
+
+
+def _sign_music_token(user_id: str, guild_id: str) -> str:
+    """Short-lived (MUSIC_TOKEN_TTL seconds) proof, for the BOT to trust,
+    that this website already authenticated `user_id` via Discord OAuth
+    and is asking on their behalf about `guild_id`. The bot still
+    independently re-checks the user's live permissions in that guild
+    before honoring any action — this token only proves identity, not
+    authorization."""
+    payload = {"user_id": user_id, "guild_id": guild_id, "exp": int(time.time()) + MUSIC_TOKEN_TTL}
+    body = base64.urlsafe_b64encode(json.dumps(payload, separators=(",", ":")).encode()).decode()
+    sig = hmac.new(MUSIC_API_SECRET.encode(), body.encode(), hashlib.sha256).hexdigest()
+    return f"{body}.{sig}"
+
+
+async def _call_bot_music_api(
+    method: str, guild_id: str, session: dict, path: str, json_body: dict | None = None,
+) -> dict:
+    if not BOT_API_URL or not MUSIC_API_SECRET:
+        return {"error": "not_configured"}
+    token = _sign_music_token(session["user_id"], guild_id)
+    headers = {"X-Music-Token": token}
+    url = f"{BOT_API_URL}/api/music/{guild_id}{path}"
+    try:
+        if method == "GET":
+            res = await http_client.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+        else:
+            res = await http_client.post(url, headers=headers, json=json_body or {}, timeout=REQUEST_TIMEOUT)
+        return res.json()
+    except Exception:
+        return {"error": "bot_unreachable"}
+
+
+async def _authorize_panel_request(request: Request, guild_id: str):
+    """Website-side gate before any bot call is even attempted: must be
+    logged in, and the guild must be one this specific user is allowed to
+    manage (from their own OAuth guild list, checked at login) AND one the
+    bot is actually currently in. Returns (session, error_response)."""
+    session = await _get_session(request)
+    if not session:
+        return None, JSONResponse({"error": "not_logged_in"}, status_code=401)
+    if not any(g["id"] == guild_id for g in session.get("guilds", [])):
+        return None, JSONResponse({"error": "forbidden"}, status_code=403)
+    bot_guild_ids = await _get_bot_guild_ids()
+    if guild_id not in bot_guild_ids:
+        return None, JSONResponse({"error": "bot_not_in_guild"}, status_code=404)
+    return session, None
 
 
 # ── Session signing (music panel login) ─────────────────────────────────────
@@ -781,6 +835,99 @@ async def music_page(request: Request, error: str = ""):
             "oauth_error": error,
         },
     )
+
+
+# ── Music panel control API (browser -> website -> bot) ─────────────────────
+# The browser never talks to the bot directly and never sees MUSIC_API_SECRET
+# — every call here re-checks the session cookie, then signs a fresh
+# short-lived token server-side before forwarding to the bot.
+
+@app.get("/api/panel/{guild_id}/state")
+async def panel_state(guild_id: str, request: Request):
+    session, err = await _authorize_panel_request(request, guild_id)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_music_api("GET", guild_id, session, "/state"))
+
+
+@app.get("/api/panel/{guild_id}/channels")
+async def panel_channels(guild_id: str, request: Request):
+    session, err = await _authorize_panel_request(request, guild_id)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_music_api("GET", guild_id, session, "/channels"))
+
+
+@app.post("/api/panel/{guild_id}/join")
+async def panel_join(guild_id: str, request: Request):
+    session, err = await _authorize_panel_request(request, guild_id)
+    if err:
+        return err
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    return JSONResponse(await _call_bot_music_api("POST", guild_id, session, "/join", body))
+
+
+@app.post("/api/panel/{guild_id}/leave")
+async def panel_leave(guild_id: str, request: Request):
+    session, err = await _authorize_panel_request(request, guild_id)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_music_api("POST", guild_id, session, "/leave"))
+
+
+@app.post("/api/panel/{guild_id}/pause")
+async def panel_pause(guild_id: str, request: Request):
+    session, err = await _authorize_panel_request(request, guild_id)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_music_api("POST", guild_id, session, "/pause"))
+
+
+@app.post("/api/panel/{guild_id}/skip")
+async def panel_skip(guild_id: str, request: Request):
+    session, err = await _authorize_panel_request(request, guild_id)
+    if err:
+        return err
+    return JSONResponse(await _call_bot_music_api("POST", guild_id, session, "/skip"))
+
+
+@app.post("/api/panel/{guild_id}/volume")
+async def panel_volume(guild_id: str, request: Request):
+    session, err = await _authorize_panel_request(request, guild_id)
+    if err:
+        return err
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    return JSONResponse(await _call_bot_music_api("POST", guild_id, session, "/volume", body))
+
+
+@app.post("/api/panel/{guild_id}/play")
+async def panel_play(guild_id: str, request: Request):
+    session, err = await _authorize_panel_request(request, guild_id)
+    if err:
+        return err
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    return JSONResponse(await _call_bot_music_api("POST", guild_id, session, "/play", body))
+
+
+@app.post("/api/panel/{guild_id}/queue/remove")
+async def panel_queue_remove(guild_id: str, request: Request):
+    session, err = await _authorize_panel_request(request, guild_id)
+    if err:
+        return err
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    return JSONResponse(await _call_bot_music_api("POST", guild_id, session, "/queue/remove", body))
 
 
 @app.get("/vote")

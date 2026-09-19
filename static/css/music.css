@@ -245,6 +245,60 @@
   font-size: 13px;
 }
 
+/* ── Join / Play cards ──────────────────────────────────────── */
+
+.music-join-card {
+  background: var(--surface);
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.music-play-card {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.music-play-input {
+  flex: 1;
+  background: var(--surface-raised);
+  border: 1px solid var(--line-bright);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+.music-play-input:disabled { opacity: 0.5; }
+
+.music-queue-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--line);
+}
+.music-queue-item:last-child { border-bottom: none; }
+.music-queue-item .qi-title { color: var(--text); }
+.music-queue-item .qi-author { color: var(--text-faint); font-size: 12px; }
+.music-queue-remove {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  font-size: 14px;
+}
+.music-queue-remove:hover { color: var(--amber); }
+
 /* ── Misc ───────────────────────────────────────────────────── */
 
 .music-phase-note {
